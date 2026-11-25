@@ -831,7 +831,7 @@ async function finishQuiz(){
     if(idx===6) p = sc.wild*2.0 + sc.energy*1.5;
     if(idx===7) p = sc.focus*2.2 + sc.energy*1.0;
     if(idx===8) p = sc.energy*1.7 + sc.wild*1.5;
-    if(!unlocked.includes(t.id)) p += 3.5;
+    if(!unlocked.includes(t.id)) p += 200;
     if(p > bestPts){ bestPts = p; best = t; }
   });
 

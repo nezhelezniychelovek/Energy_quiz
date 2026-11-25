@@ -1143,7 +1143,7 @@ document.getElementById('btn-ads-unlock').onclick = runAds;
 function runAds(){
   if(!isVK){
     document.getElementById('modal-unlock').classList.remove('active');
-    toast('🔓 Тестовый режим: доступ открыт');
+    toast('🔓 доступ открыт');
     startQuiz();
     return;
   }
@@ -1155,7 +1155,7 @@ function runAds(){
       } else toast('Досмотри рекламу до конца');
     }).catch(() => {
       document.getElementById('modal-unlock').classList.remove('active');
-      toast('🔓 Тестовый режим: доступ открыт');
+      toast('🔓 доступ открыт');
       startQuiz();
     });
   } catch(e){

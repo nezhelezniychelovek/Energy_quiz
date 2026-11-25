@@ -738,7 +738,22 @@ function renderQ(){
   document.getElementById('q-text').textContent = q[0];
 
   const banner = document.getElementById('q-banner');
-  const bannerSrc = typeof q[5] === 'string' ? q[5] : '';
+  const bannerSrc = (function(q){
+  if(typeof q[5] === 'string') return q[5];
+  const t = q[0].toLowerCase();
+  if(/чат|звон|голосовы|зарядк|мем|соцбатар|вкладк/.test(t)) return 'img/q_phone.jpg';
+  if(/магазин|тележк|курьер|ед|напиток|сутки|банку|кофейн/.test(t)) return 'img/q_shop.jpg';
+  if(/игр|клавиатур|суперспособ|риск|лотере|джекпот/.test(t)) return 'img/q_game.jpg';
+  if(/вечерин|музык|компан|друз|комплимент|сувенир/.test(t)) return 'img/q_party.jpg';
+  if(/поездк|транспорт|очеред|авантюр|лифт/.test(t)) return 'img/q_travel.jpg';
+  if(/задач|рабоч|стол|накосячил|критик|проект|продуктив|решени|стресс|5 минут/.test(t)) return 'img/q_work.jpg';
+  if(/утр|будильник|понедельник|6 утра|7 утра/.test(t)) return 'img/q_morning.jpg';
+  if(/ноч|02:30|18:00|сон|спать/.test(t)) return 'img/q_night.jpg';
+  if(/дожд|погод|температур/.test(t)) return 'img/q_rain.jpg';
+  if(/выходн|фильм|план|отмен|цвет|бесит|купюр/.test(t)) return 'img/q_chill.jpg';
+  return '';
+})(q);
+
   if(bannerSrc){
     banner.classList.remove('visible');
     banner.onload = () => banner.classList.add('visible');

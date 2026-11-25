@@ -218,7 +218,8 @@ const VK_APP_ID = '54921842';
 const VK_APP_URL = 'https://vk.com/app' + VK_APP_ID;
 const MAX_STORY_UNLOCKS = 3;
 
-const isVK = typeof vkBridge !== 'undefined' && typeof vkBridge.isWebView === 'function' && vkBridge.isWebView();
+const isVK = typeof vkBridge !== 'undefined' && (vkBridge.isWebView() || vkBridge.isEmbedded());
+
 
 const safeStore = {
   mem: {},

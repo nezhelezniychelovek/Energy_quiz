@@ -1,1491 +1,459 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Если бы ты был энергетиком • Тест</title>
-    <!-- VK Bridge для интеграции с ВК -->
-    <script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.html"></script>
-    <style>
-        :root {
-            --bg-dark: #07070c;
-            --panel-bg: #0e0f19;
-            --accent-glow: #ff007f;
-            --accent-cyan: #00f0ff;
-            --accent-blue: #0072ff;
-            --accent-amber: #ffaa00;
-            --accent-purple: #8a2be2;
-            --accent-green: #39ff14;
-            --text-light: #f5f5fa;
-            --text-muted: #787e9e;
-            --font-main: -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", Arial, sans-serif;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            user-select: none;
-            -webkit-user-select: none;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        body {
-            background-color: var(--bg-dark);
-            color: var(--text-light);
-            font-family: var(--font-main);
-            overflow: hidden;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        /* Ограничитель ширины для десктопа, на мобилках во весь экран */
-        #app-container {
-            width: 100%;
-            height: 100%;
-            max-width: 480px;
-            background-color: var(--bg-dark);
-            position: relative;
-            overflow-y: auto;
-            overflow-x: hidden;
-            display: flex;
-            flex-direction: column;
-            border-left: 1px solid rgba(255, 255, 255, 0.03);
-            border-right: 1px solid rgba(255, 255, 255, 0.03);
-        }
-
-        /* Кастомный скроллбар */
-        #app-container::-webkit-scrollbar {
-            width: 4px;
-        }
-        #app-container::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 2px;
-        }
-
-        .screen {
-            display: none;
-            flex-direction: column;
-            width: 100%;
-            min-height: 100%;
-            padding: 24px;
-            padding-top: calc(24px + env(safe-area-inset-top));
-            padding-bottom: calc(24px + env(safe-area-inset-bottom));
-            position: relative;
-        }
-
-        .screen.active {
-            display: flex;
-        }
-
-        /* Задний фон с анимированными частицами */
-        .bg-gradient {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: radial-gradient(circle at 50% 15%, #161129 0%, #07070c 70%);
-            z-index: -1;
-            pointer-events: none;
-        }
-
-        /* Хедеры и титлы */
-        .header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 24px;
-        }
-
-        .logo-text {
-            font-size: 14px;
-            font-weight: 800;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-glow));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .logo-text::before {
-            content: '⚡';
-            font-size: 14px;
-            -webkit-text-fill-color: initial;
-        }
-
-        /* Вводные экраны */
-        .hero {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding-bottom: 40px;
-        }
-
-        .glow-title {
-            font-size: 38px;
-            font-weight: 900;
-            line-height: 1.1;
-            text-transform: uppercase;
-            margin-bottom: 16px;
-            letter-spacing: -1px;
-            background: linear-gradient(135deg, #fff 30%, var(--text-muted) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 40px rgba(0, 240, 255, 0.2);
-        }
-
-        .highlight {
-            background: linear-gradient(90deg, var(--accent-glow), var(--accent-cyan));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-weight: 900;
-        }
-
-        .sub {
-            font-size: 16px;
-            color: var(--text-muted);
-            line-height: 1.5;
-            max-width: 320px;
-            margin-bottom: 32px;
-        }
-
-        /* Банка-тизер в начале */
-        .can-preview-intro {
-            width: 140px;
-            height: 260px;
-            margin-bottom: 40px;
-            position: relative;
-            filter: drop-shadow(0 0 25px rgba(255, 0, 127, 0.3));
-            animation: float 4s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0) rotate(1deg); }
-            50% { transform: translateY(-12px) rotate(-1deg); }
-        }
-
-        /* Поле ввода */
-        .input-group {
-            width: 100%;
-            max-width: 340px;
-            margin-bottom: 24px;
-        }
-
-        .input-label {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: var(--accent-cyan);
-            margin-bottom: 8px;
-            display: block;
-            font-weight: 700;
-        }
-
-        input[type="text"] {
-            width: 100%;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 16px 20px;
-            border-radius: 14px;
-            color: var(--text-light);
-            font-size: 16px;
-            font-family: var(--font-main);
-            outline: none;
-            transition: all 0.3s;
-            text-align: center;
-        }
-
-        input[type="text"]:focus {
-            border-color: var(--accent-cyan);
-            background: rgba(0, 240, 255, 0.03);
-            box-shadow: 0 0 15px rgba(0, 240, 255, 0.1);
-        }
-
-        /* Кнопки */
-        .btn {
-            width: 100%;
-            max-width: 340px;
-            background: linear-gradient(135deg, var(--accent-glow) 0%, #d000ff 100%);
-            border: none;
-            color: #fff;
-            padding: 18px 24px;
-            font-size: 16px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            border-radius: 16px;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            box-shadow: 0 4px 20px rgba(255, 0, 127, 0.4);
-            position: relative;
-            overflow: hidden;
-            margin-bottom: 12px;
-        }
-
-        .btn:active {
-            transform: scale(0.97);
-            filter: brightness(0.9);
-        }
-
-        .btn::after {
-            content: '';
-            position: absolute;
-            top: 0; left: -100%; width: 50%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
-            transform: skewX(-25deg);
-            animation: shine 4s infinite;
-        }
-
-        @keyframes shine {
-            30% { left: 150%; }
-            100% { left: 150%; }
-        }
-
-        .btn.secondary {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: none;
-        }
-        .btn.secondary:active {
-            background: rgba(255, 255, 255, 0.08);
-        }
-
-        .btn-sm {
-            padding: 12px 18px;
-            font-size: 13px;
-            border-radius: 12px;
-            width: auto;
-            max-width: none;
-        }
-
-        /* Вопросы и прогресс */
-        .progress-container {
-            width: 100%;
-            margin-bottom: 28px;
-        }
-
-        .progress-text {
-            display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            margin-bottom: 8px;
-        }
-
-        .progress-bar-bg {
-            height: 6px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 3px;
-            overflow: hidden;
-        }
-
-        .progress-bar {
-            height: 100%;
-            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-glow));
-            width: 0%;
-            transition: width 0.4s ease;
-            border-radius: 3px;
-        }
-
-        .quiz-body {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-
-        .question-text {
-            font-size: 22px;
-            font-weight: 800;
-            line-height: 1.35;
-            margin-bottom: 24px;
-            color: var(--text-light);
-        }
-
-        .options-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .option-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 14px;
-            padding: 16px 20px;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            text-align: left;
-        }
-
-        .option-card:active {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: rgba(255, 255, 255, 0.2);
-            transform: scale(0.99);
-        }
-
-        .option-icon {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            flex-shrink: 0;
-            color: var(--text-muted);
-        }
-
-        .option-card:hover .option-icon {
-            border-color: var(--accent-cyan);
-            color: var(--accent-cyan);
-        }
-
-        .option-title {
-            font-size: 15px;
-            font-weight: 500;
-            line-height: 1.4;
-            color: rgba(245, 245, 250, 0.95);
-        }
-
-        /* Экран результатов */
-        .result-layout {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 20px;
-            flex: 1;
-            padding-bottom: 40px;
-        }
-
-        .result-badge {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--accent-cyan);
-            background: rgba(0, 240, 255, 0.1);
-            padding: 4px 12px;
-            border-radius: 10px;
-            font-weight: 800;
-            border: 1px solid rgba(0, 240, 255, 0.2);
-        }
-
-        .user-can-title {
-            font-size: 26px;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: -0.5px;
-            text-align: center;
-            margin-bottom: 4px;
-        }
-
-        .can-holder {
-            position: relative;
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 10px 0;
-        }
-
-        /* Canvas-банка */
-        #renderCanvas {
-            max-width: 100%;
-            height: auto;
-            border-radius: 16px;
-            filter: drop-shadow(0 15px 35px rgba(0, 0, 0, 0.6));
-        }
-
-        /* Витрина / Коллекция */
-        .shelf-container {
-            width: 100%;
-            margin-top: 32px;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 20px;
-            padding: 16px;
-        }
-
-        .shelf-title {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: var(--text-muted);
-            margin-bottom: 16px;
-            text-align: center;
-            font-weight: 700;
-        }
-
-        .shelf-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-bottom: 4px;
-        }
-
-        .shelf-slot {
-            background: rgba(0, 0, 0, 0.25);
-            border: 1px solid rgba(255, 255, 255, 0.03);
-            border-radius: 12px;
-            aspect-ratio: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-            overflow: hidden;
-            padding: 4px;
-        }
-
-        .shelf-slot.unlocked {
-            border-color: rgba(255, 0, 127, 0.15);
-            background: radial-gradient(circle at 50% 50%, rgba(255, 0, 127, 0.04) 0%, rgba(0, 0, 0, 0.3) 100%);
-        }
-
-        .shelf-slot.locked::before {
-            content: '🔒';
-            font-size: 14px;
-            opacity: 0.25;
-        }
-
-        .slot-title {
-            font-size: 8px;
-            font-weight: 700;
-            text-transform: uppercase;
-            text-align: center;
-            margin-top: 4px;
-            color: var(--text-muted);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            width: 100%;
-        }
-
-        .slot-image {
-            width: 40px;
-            height: 60px;
-            object-fit: contain;
-        }
-
-        /* Всплывающее окно - модалка */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(5, 5, 10, 0.9);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-            padding: 24px;
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: var(--panel-bg);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 24px;
-            width: 100%;
-            max-width: 400px;
-            padding: 24px;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-        }
-
-        .modal-close {
-            position: absolute;
-            top: 16px;
-            right: 16px;
-            width: 32px;
-            height: 32px;
-            background: rgba(255, 255, 255, 0.04);
-            border: none;
-            border-radius: 50%;
-            color: var(--text-muted);
-            font-size: 14px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-title {
-            font-size: 20px;
-            font-weight: 800;
-            text-transform: uppercase;
-            margin-bottom: 12px;
-        }
-
-        .modal-text {
-            font-size: 14px;
-            color: var(--text-muted);
-            line-height: 1.5;
-            margin-bottom: 20px;
-        }
-
-        .toast {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: rgba(0, 240, 255, 0.95);
-            color: #000;
-            padding: 12px 24px;
-            border-radius: 12px;
-            font-weight: 700;
-            font-size: 13px;
-            z-index: 2000;
-            box-shadow: 0 10px 25px rgba(0, 240, 255, 0.4);
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            pointer-events: none;
-            white-space: nowrap;
-        }
-
-        .toast.show {
-            transform: translateX(-50%) translateY(0);
-        }
-
-        .disclaimer {
-            font-size: 10px;
-            color: rgba(255, 255, 255, 0.15);
-            text-align: center;
-            line-height: 1.4;
-            max-width: 280px;
-            margin: 20px auto 0;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        /* Загрузка */
-        .loader-holder {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            flex: 1;
-        }
-
-        .loader {
-            width: 48px;
-            height: 48px;
-            border: 4px dashed var(--accent-cyan);
-            border-radius: 50%;
-            animation: spin 3s linear infinite;
-            margin-bottom: 20px;
-        }
-
-        @keyframes spin {
-            100% { transform: rotate(360deg); }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Если бы ты был энергетиком • ENERGY LAB</title>
+<script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
+<style>
+:root {
+  --bg: #07070c;
+  --panel: #11121e;
+  --pink: #ff007f;
+  --cyan: #00f0ff;
+  --blue: #0072ff;
+  --text: #f5f5fa;
+  --muted: #848aa8;
+  --font: -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", Arial, sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+body {
+  background: var(--bg); color: var(--text); font-family: var(--font);
+  min-height: 100vh; display: flex; justify-content: center; overflow-x: hidden;
+}
+#app {
+  width: 100%; max-width: 480px; min-height: 100vh; position: relative;
+  background: radial-gradient(circle at 50% 10%, #191330 0%, #07070c 68%);
+  display: flex; flex-direction: column;
+}
+.screen {
+  display: none; flex-direction: column; flex: 1;
+  padding: calc(18px + env(safe-area-inset-top)) 20px calc(28px + env(safe-area-inset-bottom));
+}
+.screen.active { display: flex; }
+.header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+.logo {
+  font-size: 13px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
+  background: linear-gradient(90deg, var(--cyan), var(--pink));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.hero { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.title {
+  font-size: 32px; font-weight: 900; line-height: 1.08; text-transform: uppercase;
+  margin-bottom: 12px; letter-spacing: -0.5px;
+}
+.hl { background: linear-gradient(90deg, var(--pink), var(--cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.sub { font-size: 14px; color: var(--muted); line-height: 1.45; max-width: 320px; margin-bottom: 22px; }
+.intro-can { width: 170px; height: 260px; margin-bottom: 22px; filter: drop-shadow(0 0 28px rgba(0,240,255,0.28)); animation: flt 4s ease-in-out infinite; }
+@keyframes flt { 0%,100%{transform:translateY(0) rotate(1deg)} 50%{transform:translateY(-10px) rotate(-1deg)} }
+.inp-wrap { width: 100%; max-width: 340px; margin-bottom: 16px; }
+.inp-lbl { display: block; font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: var(--cyan); margin-bottom: 8px; }
+input[type="text"] {
+  width: 100%; padding: 15px 18px; border-radius: 14px; text-align: center; font-size: 16px; font-weight: 600;
+  color: var(--text); background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); outline: none;
+}
+input[type="text"]:focus { border-color: var(--cyan); box-shadow: 0 0 14px rgba(0,240,255,0.18); }
+.btn {
+  width: 100%; max-width: 360px; border: none; border-radius: 16px; padding: 16px 20px;
+  font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.7px; color: #fff;
+  background: linear-gradient(135deg, var(--pink), #b400ff);
+  box-shadow: 0 6px 22px rgba(255,0,127,0.35); cursor: pointer; margin-bottom: 12px;
+  display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform .15s;
+}
+.btn:active { transform: scale(0.97); }
+.btn.blue { background: linear-gradient(135deg, var(--blue), #00c6ff); box-shadow: 0 6px 20px rgba(0,114,255,0.35); }
+.btn.ghost { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); box-shadow: none; }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.prog-wrap { width: 100%; margin-bottom: 24px; }
+.prog-meta { display: flex; justify-content: space-between; font-size: 12px; font-weight: 800; color: var(--muted); text-transform: uppercase; margin-bottom: 8px; }
+.prog-bg { height: 6px; background: rgba(255,255,255,0.07); border-radius: 4px; overflow: hidden; }
+.prog-bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--cyan), var(--pink)); transition: width .35s ease; }
+.q-body { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+.q-text { font-size: 21px; font-weight: 800; line-height: 1.32; margin-bottom: 22px; }
+.opts { display: flex; flex-direction: column; gap: 11px; }
+.opt {
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px;
+  padding: 15px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; text-align: left;
+}
+.opt:active { background: rgba(0,240,255,0.1); border-color: var(--cyan); transform: scale(0.985); }
+.opt-num {
+  width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; font-size: 12px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center; color: var(--cyan);
+  background: rgba(0,240,255,0.08); border: 1px solid rgba(0,240,255,0.25);
+}
+.opt-txt { font-size: 15px; line-height: 1.35; color: #f0f0f8; }
+.loader-box { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.spin { width: 52px; height: 52px; border: 4px solid rgba(255,255,255,0.08); border-top-color: var(--cyan); border-right-color: var(--pink); border-radius: 50%; animation: sp 1s linear infinite; margin-bottom: 20px; }
+@keyframes sp { to { transform: rotate(360deg); } }
+.res-wrap { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.badge {
+  font-size: 11px; font-weight: 800; letter-spacing: 1.6px; text-transform: uppercase;
+  color: var(--cyan); background: rgba(0,240,255,0.1); border: 1px solid rgba(0,240,255,0.25);
+  padding: 5px 14px; border-radius: 99px;
+}
+.res-title { font-size: 24px; font-weight: 900; text-transform: uppercase; text-align: center; line-height: 1.15; }
+.can-stage { width: 100%; display: flex; justify-content: center; }
+#renderCanvas { width: 100%; max-width: 360px; height: auto; border-radius: 20px; display: block; }
+.info-card {
+  width: 100%; max-width: 360px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 14px;
+}
+.card-lbl { font-size: 11px; font-weight: 800; letter-spacing: 1.4px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.ing-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.ing-pill {
+  font-size: 12px; font-weight: 600; color: #fff; background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 10px;
+}
+.stats-col { display: flex; flex-direction: column; gap: 10px; }
+.st-row { display: flex; flex-direction: column; gap: 4px; }
+.st-top { display: flex; justify-content: space-between; font-size: 11px; font-weight: 800; letter-spacing: 0.8px; text-transform: uppercase; }
+.st-bg { height: 7px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; }
+.st-fill { height: 100%; border-radius: 4px; }
+.shelf {
+  width: 100%; max-width: 360px; margin-top: 8px; background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07); border-radius: 18px; padding: 14px;
+}
+.shelf-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+.slot {
+  aspect-ratio: 1; border-radius: 12px; background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.05);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6px;
+}
+.slot.unlocked { border-color: rgba(0,240,255,0.3); background: rgba(0,240,255,0.05); }
+.slot.locked::before { content: "🔒"; font-size: 16px; opacity: 0.3; }
+.slot-name { font-size: 9px; font-weight: 800; text-transform: uppercase; color: var(--muted); margin-top: 4px; text-align: center; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.disc { font-size: 10px; color: rgba(255,255,255,0.25); text-align: center; max-width: 320px; line-height: 1.4; margin-top: 8px; }
+.modal {
+  display: none; position: fixed; inset: 0; background: rgba(5,5,10,0.88); z-index: 100;
+  align-items: center; justify-content: center; padding: 20px;
+}
+.modal.active { display: flex; }
+.modal-box {
+  width: 100%; max-width: 360px; background: var(--panel); border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 22px; padding: 24px 20px; text-align: center; position: relative;
+}
+.m-close {
+  position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; border-radius: 50%;
+  border: none; background: rgba(255,255,255,0.08); color: #fff; font-size: 18px; cursor: pointer;
+}
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(90px);
+  background: var(--cyan); color: #05050a; padding: 11px 20px; border-radius: 12px;
+  font-size: 13px; font-weight: 800; z-index: 200; transition: transform .3s ease; white-space: nowrap;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+</style>
 </head>
 <body>
-
-    <div id="app-container">
-        <!-- Фон -->
-        <div class="bg-gradient"></div>
-
-        <!-- 1. Экран приветствия -->
-        <div id="screen-intro" class="screen active">
-            <div class="header">
-                <span class="logo-text">ENERGY LAB</span>
-            </div>
-            <div class="hero">
-                <h1 class="glow-title">ЕСЛИ БЫ ТЫ<br>БЫЛ <span class="highlight">ЭНЕРГЕТИКОМ?</span></h1>
-                <p class="sub">Пройди тест из 7 жестких жизненных вопросов и открой свою уникальную банку 0.5 л! Собери полную витрину из 9 вкусов!</p>
-                
-                <!-- Банка на Canvas для интро -->
-                <canvas id="canIntro" width="140" height="260" class="can-preview-intro"></canvas>
-
-                <div class="input-group">
-                    <label class="input-label" for="username-input">Твоё имя или ник</label>
-                    <input type="text" id="username-input" maxlength="15" placeholder="Введите имя..." autocomplete="off">
-                </div>
-
-                <button class="btn" id="btn-start">
-                    ⚡ Собрать свою банку
-                </button>
-            </div>
-        </div>
-
-        <!-- 2. Экран вопросов -->
-        <div id="screen-quiz" class="screen">
-            <div class="header">
-                <span class="logo-text">ENERGY LAB</span>
-            </div>
-            <div class="progress-container">
-                <div class="progress-text">
-                    <span id="quiz-step-text">Вопрос 1 из 7</span>
-                    <span id="quiz-percent-text">0%</span>
-                </div>
-                <div class="progress-bar-bg">
-                    <div class="progress-bar" id="quiz-progress"></div>
-                </div>
-            </div>
-            <div class="quiz-body">
-                <h2 class="question-text" id="question-text">Загрузка интересного вопроса...</h2>
-                <div class="options-list" id="options-holder">
-                    <!-- Заполняется JS -->
-                </div>
-            </div>
-        </div>
-
-        <!-- 3. Загрузочный экран -->
-        <div id="screen-loading" class="screen">
-            <div class="loader-holder">
-                <div class="loader"></div>
-                <h2 class="glow-title" style="font-size: 24px;">Создаем дизайн банки...</h2>
-                <p class="sub" style="font-size: 13px; margin-top: 10px;">Алгоритм сканирует твои ответы, охлаждает алюминий и газирует кибер-напиток</p>
-            </div>
-        </div>
-
-        <!-- 4. Экран результатов -->
-        <div id="screen-result" class="screen">
-            <div class="header">
-                <span class="logo-text">ENERGY LAB</span>
-            </div>
-            <div class="result-layout">
-                <span class="result-badge" id="res-category">Категория: Босс дедлайнов</span>
-                <h1 class="user-can-title" id="res-title">ИМЯ • ВКУС</h1>
-                
-                <div class="can-holder">
-                    <canvas id="renderCanvas" width="340" height="420"></canvas>
-                </div>
-
-                <button class="btn" id="btn-share-story" style="background: linear-gradient(135deg, var(--accent-blue) 0%, #00d2ff 100%); box-shadow: 0 4px 15px rgba(0, 114, 255, 0.4);">
-                    📲 Выложить в Историю ВК
-                </button>
-
-                <button class="btn" id="btn-repeat">
-                    🔄 Собрать другую банку
-                </button>
-
-                <div class="shelf-container">
-                    <div class="shelf-title">📚 Твоя витрина собранных банок (3×3)</div>
-                    <div class="shelf-grid" id="shelf-grid">
-                        <!-- Сетка 3х3 из JS -->
-                    </div>
-                </div>
-
-                <p class="disclaimer">Кастомный игровой фан-продукт. Настоящий ГОСТ. Сделано с иронией, не является рекламой и не вредит твоему здоровью.</p>
-            </div>
-        </div>
+<div id="app">
+  <div id="screen-intro" class="screen active">
+    <div class="header"><span class="logo">⚡ ENERGY LAB</span></div>
+    <div class="hero">
+      <h1 class="title">Если бы ты был <span class="hl">энергетиком?</span></h1>
+      <p class="sub">7 быстрых вопросов — и алгоритм соберёт твою именную банку 0.5 л с составом и шкалами. Собери все 9 вкусов!</p>
+      <canvas id="canIntro" width="340" height="520" class="intro-can"></canvas>
+      <div class="inp-wrap">
+        <label class="inp-lbl" for="uname">Имя или ник на банке</label>
+        <input type="text" id="uname" maxlength="16" placeholder="Введи имя..." autocomplete="off">
+      </div>
+      <button class="btn" id="btn-start">⚡ Собрать свою банку</button>
     </div>
+  </div>
 
-    <!-- Модальное окно (Повторное прохождение) -->
-    <div class="modal" id="modal-unlock">
-        <div class="modal-content">
-            <button class="modal-close" id="modal-close">×</button>
-            <h3 class="modal-title">🔓 Новая банка!</h3>
-            <p class="modal-text" id="modal-unlock-desc">Хочешь собрать ещё одну уникальную банку и узнать, какие секретные вкусы остались? Это откроет новые 7 прикольных вопросов!</p>
-            
-            <button class="btn" id="btn-story-unlock" style="background: linear-gradient(135deg, var(--accent-cyan) 0%, var(--accent-blue) 100%); font-size: 14px;">
-                🎥 Репост в Историю (бесплатно) <span id="story-unlock-counter" style="opacity:0.8; font-size:11px;">(Осталось: 3/3)</span>
-            </button>
-            
-            <button class="btn" id="btn-ads-unlock" style="background: linear-gradient(135deg, var(--accent-glow) 0%, #ff5e00 100%); font-size: 14px;">
-                🎬 Посмотреть короткую рекламу
-            </button>
-        </div>
+  <div id="screen-quiz" class="screen">
+    <div class="header"><span class="logo">⚡ ENERGY LAB</span></div>
+    <div class="prog-wrap">
+      <div class="prog-meta"><span id="q-step">Вопрос 1 из 7</span><span id="q-pct">0%</span></div>
+      <div class="prog-bg"><div class="prog-bar" id="q-bar"></div></div>
     </div>
-
-    <!-- Оповещения -->
-    <div class="toast" id="toast">Банка добавлена на полку!</div>
-
-    <script>
-        // Перед публикацией в каталоге ВК ОБЯЗАТЕЛЬНО замените YOUR_APP_ID на ID вашего приложения ВК (например 51987654)
-        const VK_APP_ID = 'YOUR_APP_ID'; 
-        const VK_APP_URL = `https://vk.com/app${VK_APP_ID}`;
-
-        // Безопасное хранилище (в памяти на случай блокировок localStorage в Sandbox)
-        const safeStorage = {
-            memory: {},
-            get(key) {
-                try { return localStorage.getItem(key) || this.memory[key] || null; } 
-                catch (e) { return this.memory[key] || null; }
-            },
-            set(key, val) {
-                try { localStorage.setItem(key, val); } catch (e) {}
-                this.memory[key] = val;
-            }
-        };
-
-        // Запуск моста ВК с защитой
-        try {
-            vkBridge.send("VKWebAppInit");
-        } catch(e) {
-            console.log("VK Bridge не запущен (вероятно запуск вне ВК)");
-        }
-
-        // Облачная синхронизация лимитов с ВК (VKWebAppStorageGet/Set)
-        async function fetchVKStorage(key, fallbackValue) {
-            try {
-                const res = await vkBridge.send("VKWebAppStorageGet", { keys: [key] });
-                if (res && res.keys && res.keys[0] && res.keys[0].value) {
-                    return res.keys[0].value;
-                }
-            } catch (e) {
-                console.log("Ошибка работы с VK Storage", e);
-            }
-            return safeStorage.get(key) || fallbackValue;
-        }
-
-        async function saveVKStorage(key, val) {
-            safeStorage.set(key, val);
-            try {
-                await vkBridge.send("VKWebAppStorageSet", { key: key, value: String(val) });
-            } catch (e) {
-                console.log("Ошибка записи в VK Storage", e);
-            }
-        }
-
-        // --- ДАТА-БАЗА 63 ВОПРОСОВ ---
-        const ALL_QUESTIONS = [
-            {
-                q: "Будильник орет, на часах 07:15. Твое первое осознанное действие?",
-                o: [
-                    { t: "Встаю за секунду, готовый разваливать задачи", score: {energy:3, wild:0, focus:2, chill:0}, ing: "Выброс адреналина" },
-                    { t: "Перевожу 'еще на 5 минут' до полного краша системы", score: {energy:0, wild:1, focus:0, chill:3}, ing: "Иллюзия сна" },
-                    { t: "Сижу на краю кровати, глядя в стену в режиме ожидания", score: {energy:1, wild:0, focus:1, chill:2}, ing: "Зависание процессора" },
-                    { t: "Сразу проверяю рабочие чаты с полуоткрытым глазом", score: {energy:2, wild:2, focus:3, chill:-1}, ing: "Утренняя тревога" }
-                ]
-            },
-            {
-                q: "В кулере закончилась вода, а в чате пишут 'СРОЧНО'. Твой уровень стресса?",
-                o: [
-                    { t: "Полнейший дзен, я видел задачи и пострашнее", score: {energy:0, wild:0, focus:2, chill:4}, ing: "Пофигин форте" },
-                    { t: "Начинаю хаотично бегать и искать виноватых", score: {energy:2, wild:3, focus:0, chill:0}, ing: "Эссенция паники" },
-                    { t: "Пишу 'понял-принял' и ухожу пить чай", score: {energy:1, wild:1, focus:1, chill:3}, ing: "Экстракт игнора" },
-                    { t: "Беру все на себя и решаю вопросы за секунды", score: {energy:4, wild:1, focus:3, chill:-1}, ing: "Таурин героизма" }
-                ]
-            },
-            {
-                q: "Каким девизом ты бы описал свой типичный дедлайн?",
-                o: [
-                    { t: "И так сойдет, главное сдать до полуночи", score: {energy:1, wild:2, focus:0, chill:3}, ing: "Экстракт авось" },
-                    { t: "Лучше сделать идеально, пусть даже с опозданием", score: {energy:2, wild:0, focus:4, chill:0}, ing: "Перфекционизм 99%" },
-                    { t: "Сделаем за ночь, у нас есть бодрость и вера", score: {energy:4, wild:3, focus:1, chill:0}, ing: "Концентрат бессонницы" },
-                    { t: "Кто-то должен был сделать это вчера", score: {energy:1, wild:0, focus:3, chill:1}, ing: "Ретро-паника" }
-                ]
-            },
-            {
-                q: "Как ты обычно реагируешь на фразу 'Нужно созвониться на 5 минут'?",
-                o: [
-                    { t: "Быстро включаюсь, решаю и возвращаюсь к делам", score: {energy:3, wild:0, focus:3, chill:0}, ing: "Скоростной режим" },
-                    { t: "Внутри меня умирает один интроверт", score: {energy:0, wild:0, focus:1, chill:3}, ing: "Социальный щит" },
-                    { t: "Придумываю 5 отмазок, чтобы перевести в переписку", score: {energy:1, wild:2, focus:0, chill:3}, ing: "Скрытый режим" },
-                    { t: "Шучу, разбавляю обстановку и создаю позитив", score: {energy:2, wild:4, focus:0, chill:2}, ing: "Эссенция шуток" }
-                ]
-            },
-            {
-                q: "Тебе предложили заняться сложной новой задачей. Твои мысли?",
-                o: [
-                    { t: "О да, вызов принят, я в деле!", score: {energy:4, wild:3, focus:2, chill:-1}, ing: "Азарт первооткрывателя" },
-                    { t: "Сначала изучу все инструкции от корки до корки", score: {energy:1, wild:0, focus:4, chill:1}, ing: "Аналитический спирт" },
-                    { t: "Попробую делегировать кому-нибудь другому", score: {energy:0, wild:2, focus:0, chill:4}, ing: "Мастерство уклонения" },
-                    { t: "Сделаю базовую часть, а там посмотрим", score: {energy:2, wild:1, focus:2, chill:2}, ing: "Прагматизм" }
-                ]
-            },
-            {
-                q: "Начался долгожданный выходной. Каков твой идеальный план?",
-                o: [
-                    { t: "Весь день лежать в кровати и смотреть сериалы", score: {energy:0, wild:0, focus:0, chill:5}, ing: "Абсолютный покой" },
-                    { t: "Спонтанное путешествие или встреча со всеми сразу", score: {energy:3, wild:4, focus:0, chill:2}, ing: "Движ-эссенция" },
-                    { t: "Уборка, готовка и закрытие бытовых гештальтов", score: {energy:2, wild:0, focus:3, chill:1}, ing: "Бытовая энергия" },
-                    { t: "Пройти курс, почитать книгу, узнать новое", score: {energy:2, wild:1, focus:4, chill:0}, ing: "Ментальный тонус" }
-                ]
-            },
-            {
-                q: "Что находится на твоем рабочем столе прямо сейчас?",
-                o: [
-                    { t: "Идеальный порядок, все по полочкам", score: {energy:1, wild:0, focus:4, chill:1}, ing: "Порядок в голове" },
-                    { t: "Творческий хаос, чашки, крошки и провода", score: {energy:2, wild:4, focus:0, chill:2}, ing: "Анархия уюта" },
-                    { t: "Куча стикеров, блокнотов и заметок", score: {energy:3, wild:1, focus:3, chill:0}, ing: "Загруженный буфер" },
-                    { t: "Только ноутбук и телефон, ничего лишнего", score: {energy:2, wild:0, focus:2, chill:3}, ing: "Минимализм" }
-                ]
-            },
-            // 8-14
-            {
-                q: "Твой коллега прислал мем в рабочий чат в разгар обсуждения. Твои действия?",
-                o: [
-                    { t: "Кидаю ответный мем, работа подождет", score: {wild:3, chill:2, energy:1}, ing: "Смехотерапия" },
-                    { t: "Игнорирую и продолжаю писать по делу", score: {focus:4, chill:0, wild:-1}, ing: "Концентрация" },
-                    { t: "Ставлю смайлик и возвращаюсь к задачам", score: {focus:2, chill:2, energy:1}, ing: "Дипломатия" },
-                    { t: "Начинаю целое обсуждение этого мема", score: {wild:4, energy:2, focus:-1}, ing: "Оффтоп" }
-                ]
-            },
-            {
-                q: "Какое 'топливо' помогает тебе продержаться до конца дня?",
-                o: [
-                    { t: "Ведра кофе или крепкого чая", score: {energy:3, focus:2, chill:1}, ing: "Кофеиновый буст" },
-                    { t: "Что-нибудь сладкое (шоколад, конфеты)", score: {energy:4, wild:2, chill:0}, ing: "Глюкозная бомба" },
-                    { t: "Морально-волевые и мысль о доме", score: {focus:3, energy:2, wild:0}, ing: "Воля к победе" },
-                    { t: "Музыка в наушниках на полную", score: {wild:3, chill:3, energy:1}, ing: "Аудио-заряд" }
-                ]
-            },
-            {
-                q: "Ты случайно совершил ошибку в важном деле. Как реагируешь?",
-                o: [
-                    { t: "Сразу признаю и быстро все исправляю", score: {focus:3, energy:3, chill:1}, ing: "Оперативность" },
-                    { t: "Начинаю сильно переживать и копаться в себе", score: {focus:1, chill:0, wild:2}, ing: "Самоанализ" },
-                    { t: "Спокойно ищу варианты решения без паники", score: {chill:4, focus:3, wild:0}, ing: "Железные нервы" },
-                    { t: "Надеюсь, что никто не заметит, и пытаюсь замять", score: {wild:3, chill:2, focus:0}, ing: "Маневренность" }
-                ]
-            },
-            {
-                q: "Как ты ведешь себя в больших и шумных компаниях?",
-                o: [
-                    { t: "Я в центре внимания, генерирую шутки и движ", score: {wild:4, energy:3, chill:0}, ing: "Харизма" },
-                    { t: "Общаюсь с 1-2 знакомыми людьми в стороне", score: {chill:3, focus:1, wild:0}, ing: "Интроверсия" },
-                    { t: "Слушаю, наблюдаю и ем вкусную еду", score: {chill:4, wild:1, focus:1}, ing: "Наблюдательность" },
-                    { t: "Быстро устаю и ухожу по-английски", score: {focus:1, energy:-1, chill:3}, ing: "Энергосбережение" }
-                ]
-            },
-            {
-                q: "Что ты делаешь, если интернет начинает дико тормозить?",
-                o: [
-                    { t: "Перезагружаю роутер, проверяю провода, звоню провайдеру", score: {energy:3, focus:3, wild:0}, ing: "Технический буст" },
-                    { t: "Дико бешусь и стучу по столу", score: {wild:3, energy:2, focus:0}, ing: "Раздражительность" },
-                    { t: "Спокойно откладываю дела и иду отдыхать", score: {chill:4, energy:-1, focus:1}, ing: "Релаксация" },
-                    { t: "Пытаюсь поймать мобильный интернет", score: {energy:2, wild:2, focus:2}, ing: "Изобретательность" }
-                ]
-            },
-            {
-                q: "На сколько процентов твой внутренний 'аккумулятор' заряжен прямо сейчас?",
-                o: [
-                    { t: "100%! Готов сворачивать горы и бежать марафон", score: {energy:5, wild:3, focus:2, chill:-1}, ing: "Полный бак" },
-                    { t: "Около 50% — нормально, жить и работать можно", score: {energy:2, focus:2, chill:2, wild:1}, ing: "Стабильный заряд" },
-                    { t: "На донышке (10-20%), держусь на честном слове", score: {energy:0, focus:1, chill:3, wild:1}, ing: "Резервный режим" },
-                    { t: "Разряжен в ноль, не трогайте меня", score: {energy:-1, focus:0, chill:5, wild:0}, ing: "Энергосбережение" }
-                ]
-            },
-            {
-                q: "Как ты относишься к спонтанным поездкам или приключениям?",
-                o: [
-                    { t: "Обожаю! Собираю рюкзак за 5 минут и еду", score: {wild:5, energy:3, chill:1}, ing: "Авантюризм" },
-                    { t: "Только если все спланировано заранее", score: {focus:4, chill:1, wild:0}, ing: "Планирование" },
-                    { t: "Долго сомневаюсь, но в итоге соглашаюсь", score: {energy:1, focus:1, wild:2, chill:2}, ing: "Нерешительность" },
-                    { t: "Отказываюсь, лучше побуду дома", score: {chill:4, energy:-1, focus:1}, ing: "Домоседство" }
-                ]
-            }
-        ];
-
-        // Генерируем 63 вопроса на основе базовых шаблонов
-        function populateQuestions() {
-            if (ALL_QUESTIONS.length >= 63) return;
-            const themes = [
-                { keyword: "дедлайн", q: "Пришел внезапный дедлайн на вчера. Твой план?", o1: "Врубаю турбо-режим и делаю за час", o2: "Паникую минут 15, потом начинаю", o3: "Договариваюсь о переносе сроков", o4: "Делаю вид, что не видел письма" },
-                { keyword: "сон", q: "Если нужно лечь спать, но в интернете кто-то неправ?", o1: "Буду спорить до победного конца", o2: "Напишу один коммент и пойду спать", o3: "Проигнорирую, сон важнее", o4: "Почитаю чужие споры и усну" },
-                { keyword: "уборка", q: "Настало время генеральной уборки. Как это происходит?", o1: "Быстро и под энергичную музыку", o2: "Растягиваю на весь день с перерывами", o3: "Убираю только то, что на виду", o4: "Нанимаю клининг или зову на помощь" },
-                { keyword: "созвон", q: "Внезапный звонок с незнакомого номера. Твоя реакция?", o1: "Сразу беру трубку, вдруг важно", o2: "Жду, пока перестанет звонить", o3: "Сбрасываю и ищу номер в поисковике", o4: "Беру и отвечаю максимально бодро" },
-                { keyword: "кофе", q: "Тебе предложили кофе, но остался только растворимый.", o1: "Выпью, мне нужен любой кофеин", o2: "Откажусь, лучше попью чай", o3: "Сделаю с молоком и сахаром, пойдет", o4: "Пойду искать нормальный кофе" },
-                { keyword: "задача", q: "Сложная задача не получается уже час. Что делаешь?", o1: "Буду биться до последнего", o2: "Отложу и переключусь на другое", o3: "Пойду просить помощи у коллег", o4: "Пойду попью чай/кофе, надо отвлечься" },
-                { keyword: "выходные", q: "Суббота, утро. Во сколько ты просыпаешься?", o1: "Раньше 8, планов слишком много", o2: "Около 10-11, золотая середина", o3: "В районе обеда, не беспокоить", o4: "Когда как, режима нет" },
-                { keyword: "музыка", q: "Какую музыку ты включаешь для сосредоточенной работы?", o1: "Быстрый рок или электронику", o2: "Спокойный лоу-фай или эмбиент", o3: "Попсу, под которую можно подпевать", o4: "Работаю в полной тишине" }
-            ];
-
-            let index = 0;
-            while (ALL_QUESTIONS.length < 63) {
-                const template = themes[index % themes.length];
-                const r = Math.random();
-                const uniqueQ = `${template.q} (Версия ${Math.floor(ALL_QUESTIONS.length / themes.length) + 1})`;
-                ALL_QUESTIONS.push({
-                    q: uniqueQ,
-                    o: [
-                        { t: template.o1, score: {energy:3, wild:1, focus:2, chill:0}, ing: "Решительность " + (index+1) },
-                        { t: template.o2, score: {energy:1, wild:3, focus:1, chill:1}, ing: "Эмоции " + (index+1) },
-                        { t: template.o3, score: {energy:0, wild:0, focus:3, chill:3}, ing: "Тактика " + (index+1) },
-                        { t: template.o4, score: {energy:-1, wild:2, focus:0, chill:4}, ing: "Режим игнора " + (index+1) }
-                    ]
-                });
-                index++;
-            }
-        }
-        populateQuestions();
-
-        // 9 уникальных тем дизайна
-        const CAN_THEMES = [
-            { id: "volt_rush", name: "Volt Rush", color1: "#00f0ff", color2: "#0072ff", desc: "Ультра-заряд", pattern: "⚡", cat: "Кибер-разгон" },
-            { id: "berry_blitz", name: "Berry Blitz", color1: "#ff007f", color2: "#8a2be2", desc: "Ягодный буст", pattern: "🍓", cat: "Взрывной движ" },
-            { id: "neon_ghost", name: "Neon Ghost", color1: "#39ff14", color2: "#05050a", desc: "Скрытый режим", pattern: "👻", cat: "Ночной шпион" },
-            { id: "sol_fire", name: "Sol Fire", color1: "#ff5e00", color2: "#ffaa00", desc: "Жгучий азарт", pattern: "🔥", cat: "Огненный хаос" },
-            { id: "glitch_wave", name: "Glitch Wave", color1: "#ff00ff", color2: "#00f0ff", desc: "Глитч-драйв", pattern: "👾", cat: "Цифровой бунт" },
-            { id: "ice_shard", name: "Ice Shard", color1: "#e0f7fa", color2: "#00acc1", desc: "Ледяной дзен", pattern: "❄️", cat: "Холодный разум" },
-            { id: "zen_matcha", name: "Zen Matcha", color1: "#81c784", color2: "#2e7d32", desc: "Мягкий фокус", pattern: "🌿", cat: "Природный дзен" },
-            { id: "dark_roast", name: "Dark Roast", color1: "#8d6e63", color2: "#3e2723", desc: "Тяжелый дедлайн", pattern: "☕", cat: "Тяжелый люкс" },
-            { id: "space_vibe", name: "Space Vibe", color1: "#7e57c2", color2: "#1a237e", desc: "Космический чилл", pattern: "✨", cat: "Межзвездный покой" }
-        ];
-
-        // Игровая логика
-        let currentQuestions = [];
-        let curIndex = 0;
-        let score = { energy: 0, wild: 0, focus: 0, chill: 0 };
-        let selectedIngredients = [];
-        let userName = "Игрок";
-        
-        let storyUnlockCount = 3; 
-        let unlockedBanks = []; 
-        let activeThemeId = "volt_rush";
-
-        async function initApp() {
-            // Загрузка сохраненного прогресса
-            storyUnlockCount = parseInt(await fetchVKStorage('story_unlock_count', '3'), 10);
-            try {
-                unlockedBanks = JSON.parse(await fetchVKStorage('unlocked_banks', '[]'));
-            } catch(e) { unlockedBanks = []; }
-
-            // Обновляем текст лимитов
-            document.getElementById('story-unlock-counter').innerText = `(Осталось: ${storyUnlockCount}/3)`;
-            if (storyUnlockCount <= 0) {
-                const btn = document.getElementById('btn-story-unlock');
-                btn.disabled = true;
-                btn.style.opacity = '0.5';
-                btn.innerText = "🔒 Лимит Историй исчерпан (0/3)";
-            }
-
-            renderCan(document.getElementById('canIntro'), CAN_THEMES[0], "Твой энергетический ID", ["Экстракт бодрости", "Таурин", "Кофеин"], {energy:70, wild:45, focus:60});
-        }
-
-        // Запуск
-        initApp();
-
-        // Старт теста
-        document.getElementById('btn-start').addEventListener('click', () => {
-            const val = document.getElementById('username-input').value.trim();
-            userName = val || "Аноним";
-            try { vkBridge.send("VKWebAppTapticImpactOccurred", { force_impact_type: "light" }); } catch(e){}
-            startQuiz();
-        });
-
-        function startQuiz() {
-            // Выбираем 7 случайных неповторяющихся вопросов
-            currentQuestions = [...ALL_QUESTIONS].sort(() => 0.5 - Math.random()).slice(0, 7);
-            curIndex = 0;
-            score = { energy: 0, wild: 0, focus: 0, chill: 0 };
-            selectedIngredients = [];
-
-            showScreen('screen-quiz');
-            showQuestion();
-        }
-
-        function showScreen(id) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-        }
-
-        function showQuestion() {
-            if (curIndex >= 7) {
-                showLoadingAndResult();
-                return;
-            }
-
-            const qData = currentQuestions[curIndex];
-            document.getElementById('quiz-step-text').innerText = `Вопрос ${curIndex + 1} из 7`;
-            
-            const percent = Math.round((curIndex / 7) * 100);
-            document.getElementById('quiz-percent-text').innerText = `${percent}%`;
-            document.getElementById('quiz-progress').style.width = `${percent}%`;
-            document.getElementById('question-text').innerText = qData.q;
-
-            const holder = document.getElementById('options-holder');
-            holder.innerHTML = '';
-
-            qData.o.forEach((opt, oIdx) => {
-                const card = document.createElement('div');
-                card.className = 'option-card';
-                card.innerHTML = `
-                    <div class="option-icon">${oIdx + 1}</div>
-                    <div class="option-title">${opt.t}</div>
-                `;
-                card.addEventListener('click', () => selectOption(opt));
-                holder.appendChild(card);
-            });
-        }
-
-        function selectOption(opt) {
-            try { vkBridge.send("VKWebAppTapticImpactOccurred", { force_impact_type: "light" }); } catch(e){}
-            
-            // Считаем баллы
-            if (opt.score) {
-                for (let k in opt.score) {
-                    score[k] = (score[k] || 0) + opt.score[k];
-                }
-            }
-            if (opt.ing) {
-                selectedIngredients.push(opt.ing);
-            }
-
-            curIndex++;
-            showQuestion();
-        }
-
-        function showLoadingAndResult() {
-            showScreen('screen-loading');
-            setTimeout(() => {
-                calculateAndShowResult();
-            }, 2200);
-        }
-
-        function calculateAndShowResult() {
-            // Определение наиболее подходящей темы
-            let bestTheme = CAN_THEMES[0];
-            let maxPoints = -999;
-
-            // Алгоритм вычисления
-            CAN_THEMES.forEach(theme => {
-                let currentPoints = 0;
-                if (theme.id === "volt_rush") currentPoints = score.energy * 2 + score.focus;
-                if (theme.id === "berry_blitz") currentPoints = score.wild * 2 + score.energy;
-                if (theme.id === "neon_ghost") currentPoints = score.chill * 2 + score.focus;
-                if (theme.id === "sol_fire") currentPoints = score.wild * 2 + score.energy;
-                if (theme.id === "glitch_wave") currentPoints = score.wild * 3;
-                if (theme.id === "ice_shard") currentPoints = score.chill * 2 + score.focus;
-                if (theme.id === "zen_matcha") currentPoints = score.chill * 2 + score.focus;
-                if (theme.id === "dark_roast") currentPoints = score.focus * 2 + score.energy;
-                if (theme.id === "space_vibe") currentPoints = score.chill * 3;
-
-                // Буст для еще не открытых банок
-                const isLocked = !unlockedBanks.some(b => b.id === theme.id);
-                if (isLocked) {
-                    currentPoints += 3; // Лёгкое подталкивание открыть новую
-                }
-
-                if (currentPoints > maxPoints) {
-                    maxPoints = currentPoints;
-                    bestTheme = theme;
-                }
-            });
-
-            activeThemeId = bestTheme.id;
-
-            // Сохраняем в коллекцию
-            if (!unlockedBanks.some(b => b.id === bestTheme.id)) {
-                unlockedBanks.push({
-                    id: bestTheme.id,
-                    name: bestTheme.name,
-                    user: userName
-                });
-                saveVKStorage('unlocked_banks', JSON.stringify(unlockedBanks));
-                showToast(`🎉 Новая банка "${bestTheme.name}" на полке!`);
-            }
-
-            // Шкалы для визуализации
-            const stats = {
-                energy: Math.min(Math.max(Math.round((score.energy / 18) * 100), 10), 100),
-                wild: Math.min(Math.max(Math.round((score.wild / 18) * 100), 10), 100),
-                focus: Math.min(Math.max(Math.round((score.focus / 18) * 100), 10), 100)
-            };
-
-            // Обновляем текстовые поля
-            document.getElementById('res-category').innerText = `Категория: ${bestTheme.cat}`;
-            document.getElementById('res-title').innerText = `${userName.toUpperCase()} • ${bestTheme.name.toUpperCase()}`;
-
-            // Отрисовка баночки на Canvas
-            const canvas = document.getElementById('renderCanvas');
-            renderCan(canvas, bestTheme, userName, selectedIngredients.slice(0, 3), stats);
-
-            // Отрисовка полки
-            renderShelf();
-
-            showScreen('screen-result');
-            try { vkBridge.send("VKWebAppTapticImpactOccurred", { force_impact_type: "heavy" }); } catch(e){}
-        }
-
-        // Отрисовка Банки 0.5 литра на HTML5 Canvas
-        function renderCan(canvas, theme, name, ingredients, stats) {
-            const ctx = canvas.getContext('2d');
-            const w = canvas.width;
-            const h = canvas.height;
-
-            // Очистка
-            ctx.clearRect(0,0,w,h);
-
-            // Мягкое неоновое свечение на заднем плане
-            let glowGrad = ctx.createRadialGradient(w/2, h/2, 50, w/2, h/2, 200);
-            glowGrad.addColorStop(0, theme.color1 + '22');
-            glowGrad.addColorStop(1, '#00000000');
-            ctx.fillStyle = glowGrad;
-            ctx.fillRect(0, 0, w, h);
-
-            // 1. Рисуем банку (3D Цилиндр)
-            const cx = w/2;
-            const cy = h/2 - 10;
-            const canW = 140;
-            const canH = 250;
-
-            // Тень
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-            ctx.shadowBlur = 20;
-            ctx.shadowOffsetY = 15;
-
-            // Крышка верхняя металлическая
-            ctx.fillStyle = '#b0b5bc';
-            ctx.beginPath();
-            ctx.ellipse(cx, cy - canH/2, canW/2 + 2, 8, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.fillStyle = '#787e87';
-            ctx.beginPath();
-            ctx.ellipse(cx, cy - canH/2 + 2, canW/2 - 2, 5, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Основное тело банки
-            ctx.shadowColor = 'transparent'; // убираем тень
-            let canGrad = ctx.createLinearGradient(cx - canW/2, 0, cx + canW/2, 0);
-            canGrad.addColorStop(0, '#100e17');
-            canGrad.addColorStop(0.15, theme.color1);
-            canGrad.addColorStop(0.5, theme.color2);
-            canGrad.addColorStop(0.85, theme.color1);
-            canGrad.addColorStop(1, '#100e17');
-
-            ctx.fillStyle = canGrad;
-            ctx.beginPath();
-            ctx.moveTo(cx - canW/2, cy - canH/2);
-            ctx.lineTo(cx + canW/2, cy - canH/2);
-            ctx.quadraticCurveTo(cx + canW/2, cy + canH/2, cx + canW/2 - 4, cy + canH/2);
-            ctx.lineTo(cx - canW/2 + 4, cy + canH/2);
-            ctx.quadraticCurveTo(cx - canW/2, cy + canH/2, cx - canW/2, cy - canH/2);
-            ctx.closePath();
-            ctx.fill();
-
-            // Текстурный паттерн темы
-            ctx.save();
-            ctx.beginPath();
-            ctx.rect(cx - canW/2, cy - canH/2, canW, canH);
-            ctx.clip();
-            ctx.globalAlpha = 0.12;
-            ctx.fillStyle = '#fff';
-            ctx.font = '24px sans-serif';
-            for (let i = 0; i < 6; i++) {
-                for (let j = 0; j < 6; j++) {
-                    ctx.fillText(theme.pattern, cx - canW/2 + j*30 + (i%2*10), cy - canH/2 + i*50);
-                }
-            }
-            ctx.restore();
-
-            // Блики и металлический объем
-            let highlight = ctx.createLinearGradient(cx - canW/2, 0, cx + canW/2, 0);
-            highlight.addColorStop(0, 'rgba(255,255,255,0.2)');
-            highlight.addColorStop(0.1, 'rgba(255,255,255,0.0)');
-            highlight.addColorStop(0.45, 'rgba(255,255,255,0.15)');
-            highlight.addColorStop(0.55, 'rgba(0,0,0,0.35)');
-            highlight.addColorStop(0.9, 'rgba(255,255,255,0.0)');
-            highlight.addColorStop(1, 'rgba(0,0,0,0.6)');
-            ctx.fillStyle = highlight;
-            ctx.beginPath();
-            ctx.rect(cx - canW/2, cy - canH/2, canW, canH);
-            ctx.fill();
-
-            // Нижнее металлическое донышко
-            ctx.fillStyle = '#787e87';
-            ctx.beginPath();
-            ctx.ellipse(cx, cy + canH/2, canW/2 - 2, 7, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = '#4b5056';
-            ctx.beginPath();
-            ctx.ellipse(cx, cy + canH/2 + 2, canW/2 - 6, 4, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            // 2. Брендинг на Банке
-            ctx.fillStyle = '#000000';
-            ctx.globalAlpha = 0.4;
-            ctx.fillRect(cx - canW/2 + 10, cy - canH/3, canW - 20, 115);
-            ctx.globalAlpha = 1.0;
-
-            // Категория / ГОСТ
-            ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 7px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText("ENERGY LAB • ИГРОВОЙ ФАН-ПРОДУКТ", cx, cy - canH/3 + 12);
-
-            // Текст НАЗВАНИЕ
-            ctx.fillStyle = '#ffffff';
-            ctx.font = '900 13px sans-serif';
-            ctx.fillText(theme.name.toUpperCase(), cx, cy - canH/3 + 30);
-
-            // Имя Игрока
-            ctx.fillStyle = theme.color1;
-            ctx.font = '900 11px sans-serif';
-            ctx.fillText(name.toUpperCase(), cx, cy - canH/3 + 46);
-
-            // Молния / Эмблема
-            ctx.fillStyle = '#ffaa00';
-            ctx.shadowColor = '#ffaa00';
-            ctx.shadowBlur = 10;
-            ctx.font = '24px sans-serif';
-            ctx.fillText("⚡", cx, cy - canH/3 + 74);
-            ctx.shadowBlur = 0; // убираем
-
-            // Объем 0.5L
-            ctx.fillStyle = 'rgba(255,255,255,0.7)';
-            ctx.font = 'bold 8px sans-serif';
-            ctx.fillText("ОБЪЕМ: 0.5 Л", cx, cy - canH/3 + 94);
-
-            // 3. Рисуем состав сбоку (как на настоящей этикетке)
-            ctx.textAlign = 'left';
-            ctx.fillStyle = 'rgba(255,255,255,0.4)';
-            ctx.font = '8px sans-serif';
-            ctx.fillText("АКТИВНЫЙ СОСТАВ:", cx - canW/2 - 80, cy - 80);
-
-            ctx.fillStyle = 'rgba(255,255,255,0.85)';
-            ctx.font = 'bold 9px sans-serif';
-            ingredients.forEach((ing, iIdx) => {
-                ctx.fillText(`• ${ing}`, cx - canW/2 - 80, cy - 60 + (iIdx * 16));
-            });
-
-            // Калорийность
-            ctx.fillStyle = 'rgba(255,255,255,0.4)';
-            ctx.font = '7px sans-serif';
-            ctx.fillText("ККАЛ / 100МЛ — 0 (ZERO SUGAR)", cx - canW/2 - 80, cy + 10);
-            ctx.fillText("НЕ РЕКОМЕНДУЕТСЯ СПАТЬ", cx - canW/2 - 80, cy + 22);
-
-            // 4. Рисуем три шкалы (Stats)
-            ctx.textAlign = 'left';
-            const statsData = [
-                { label: "ЗАРЯД", val: stats.energy, col: theme.color1 },
-                { label: "АДЕКВАТНОСТЬ", val: stats.wild, col: '#ffaa00' },
-                { label: "ВЫНОСЛИВОСТЬ", val: stats.focus, col: theme.color2 }
-            ];
-
-            statsData.forEach((st, sIdx) => {
-                const sx = cx + canW/2 + 15;
-                const sy = cy - 60 + (sIdx * 35);
-                const barW = 60;
-
-                ctx.fillStyle = 'rgba(255,255,255,0.5)';
-                ctx.font = 'bold 8px sans-serif';
-                ctx.fillText(st.label, sx, sy);
-
-                // Задняя часть шкалы
-                ctx.fillStyle = 'rgba(255,255,255,0.1)';
-                ctx.fillRect(sx, sy + 4, barW, 4);
-
-                // Заполнение
-                ctx.fillStyle = st.col;
-                ctx.fillRect(sx, sy + 4, (st.val / 100) * barW, 4);
-
-                // Процент
-                ctx.fillStyle = '#ffffff';
-                ctx.font = 'bold 7px sans-serif';
-                ctx.fillText(`${st.val}%`, sx + barW + 5, sy + 9);
-            });
-        }
-
-        // Отрисовка полки коллекционера 3х3
-        function renderShelf() {
-            const grid = document.getElementById('shelf-grid');
-            grid.innerHTML = '';
-
-            // 9 слотов коллекции
-            CAN_THEMES.forEach(theme => {
-                const unlocked = unlockedBanks.find(b => b.id === theme.id);
-                const slot = document.createElement('div');
-                slot.className = `shelf-slot ${unlocked ? 'unlocked' : 'locked'}`;
-
-                if (unlocked) {
-                    // Создаем мини-canvas превью
-                    const miniCan = document.createElement('canvas');
-                    miniCan.width = 40;
-                    miniCan.height = 65;
-                    miniCan.className = 'slot-image';
-                    renderMiniCan(miniCan, theme);
-                    
-                    slot.appendChild(miniCan);
-                    
-                    const nameLabel = document.createElement('div');
-                    nameLabel.className = 'slot-title';
-                    nameLabel.innerText = theme.name;
-                    slot.appendChild(nameLabel);
-                }
-
-                grid.appendChild(slot);
-            });
-        }
-
-        function renderMiniCan(canvas, theme) {
-            const ctx = canvas.getContext('2d');
-            const w = canvas.width;
-            const h = canvas.height;
-
-            ctx.clearRect(0,0,w,h);
-
-            const cx = w/2;
-            const cy = h/2;
-            const canW = 22;
-            const canH = 46;
-
-            // Свечение сзади
-            ctx.fillStyle = theme.color1 + '33';
-            ctx.beginPath();
-            ctx.arc(cx, cy, 15, 0, Math.PI*2);
-            ctx.fill();
-
-            // Основная часть
-            let grad = ctx.createLinearGradient(cx - canW/2, 0, cx + canW/2, 0);
-            grad.addColorStop(0, '#000');
-            grad.addColorStop(0.3, theme.color1);
-            grad.addColorStop(0.7, theme.color2);
-            grad.addColorStop(1, '#000');
-
-            ctx.fillStyle = grad;
-            ctx.fillRect(cx - canW/2, cy - canH/2, canW, canH);
-
-            // Текст или символ темы
-            ctx.fillStyle = '#fff';
-            ctx.font = '10px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText(theme.pattern, cx, cy + 4);
-        }
-
-        // --- МОНЕТИЗАЦИЯ / ПОВТОРНЫЙ ПРОХОД ---
-        document.getElementById('btn-repeat').addEventListener('click', async () => {
-            // Если игрок только начал или у него есть свободные репосты
-            if (storyUnlockCount > 0) {
-                // Показываем модальное окно выбора
-                document.getElementById('modal-unlock').classList.add('active');
-            } else {
-                // Если репосты кончились - сразу реклама
-                runAdsUnlock();
-            }
-        });
-
-        document.getElementById('modal-close').addEventListener('click', () => {
-            document.getElementById('modal-unlock').classList.remove('active');
-        });
-
-        // Опция 1: Репост в Историю (Лимит 3 раза)
-        document.getElementById('btn-story-unlock').addEventListener('click', async () => {
-            if (storyUnlockCount <= 0) return;
-
-            try {
-                const canvas = document.getElementById('renderCanvas');
-                const base64Image = canvas.toDataURL('image/png');
-
-                // Пытаемся опубликовать в историю через VK Bridge
-                await vkBridge.send("VKWebAppShowStoryBox", {
-                    background_type: "image",
-                    background_attachment: base64Image,
-                    attachment: {
-                        text: "Узнай, какой ты энергетик! ⚡",
-                        type: "url",
-                        url: VK_APP_URL
-                    }
-                });
-
-                // Уменьшаем счетчик лимитов
-                storyUnlockCount--;
-                await saveVKStorage('story_unlock_count', storyUnlockCount);
-                document.getElementById('story-unlock-counter').innerText = `(Осталось: ${storyUnlockCount}/3)`;
-
-                if (storyUnlockCount <= 0) {
-                    const btn = document.getElementById('btn-story-unlock');
-                    btn.disabled = true;
-                    btn.style.opacity = '0.5';
-                    btn.innerText = "🔒 Лимит Историй исчерпан (0/3)";
-                }
-
-                document.getElementById('modal-unlock').classList.remove('active');
-                showToast("🔓 Доступ открыт! Поехали!");
-                startQuiz();
-
-            } catch (e) {
-                console.log("Репост отклонен или произошла ошибка", e);
-                showToast("Пожалуйста, опубликуйте историю для продолжения!");
-            }
-        });
-
-        // Опция 2: Просмотр короткой рекламы (Безлимитно)
-        document.getElementById('btn-ads-unlock').addEventListener('click', () => {
-            runAdsUnlock();
-        });
-
-        function runAdsUnlock() {
-            try {
-                // Вызов реальной нативной рекламы ВК за вознаграждение
-                vkBridge.send("VKWebAppShowNativeAds", { ad_format: "reward" })
-                .then(data => {
-                    if (data.result) {
-                        document.getElementById('modal-unlock').classList.remove('active');
-                        showToast("🔓 Реклама просмотрена! Поехали!");
-                        startQuiz();
-                    } else {
-                        showToast("Просмотр рекламы не завершен!");
-                    }
-                })
-                .catch(err => {
-                    console.log("Ошибка рекламы, симулируем просмотр", err);
-                    // На случай если реклама не подключена или не загрузилась у пользователя
-                    showToast("⏳ Загрузка...");
-                    setTimeout(() => {
-                        document.getElementById('modal-unlock').classList.remove('active');
-                        showToast("🔓 Доступ открыт!");
-                        startQuiz();
-                    }, 2000);
-                });
-            } catch (e) {
-                // Sandbox fallback
-                showToast("🔓 Доступ открыт (Превью-режим)");
-                document.getElementById('modal-unlock').classList.remove('active');
-                startQuiz();
-            }
-        }
-
-        // Кнопка: Поделиться в Историю на главном экране (Просто виральность)
-        document.getElementById('btn-share-story').addEventListener('click', async () => {
-            try {
-                const canvas = document.getElementById('renderCanvas');
-                const base64Image = canvas.toDataURL('image/png');
-
-                await vkBridge.send("VKWebAppShowStoryBox", {
-                    background_type: "image",
-                    background_attachment: base64Image,
-                    attachment: {
-                        text: "Какой ты энергетик? Собери свою банку! ⚡",
-                        type: "url",
-                        url: VK_APP_URL
-                    }
-                });
-                showToast("Успешно опубликовано!");
-            } catch (e) {
-                showToast("Ошибка публикации!");
-            }
-        });
-
-        // Toast уведомления
-        function showToast(text) {
-            const t = document.getElementById('toast');
-            t.innerText = text;
-            t.classList.add('show');
-            setTimeout(() => t.classList.remove('show'), 3000);
-        }
-    </script>
-</body>
-</html>
+    <div class="q-body">
+      <h2 class="q-text" id="q-text"></h2>
+      <div class="opts" id="q-opts"></div>
+    </div>
+  </div>
+
+  <div id="screen-load" class="screen">
+    <div class="loader-box">
+      <div class="spin"></div>
+      <h2 class="title" style="font-size:22px">Газируем твою банку...</h2>
+      <p class="sub">Подбираем дизайн, охлаждаем алюминий и печатаем состав по ГОСТу</p>
+    </div>
+  </div>
+
+  <div id="screen-res" class="screen">
+    <div class="header"><span class="logo">⚡ ENERGY LAB</span></div>
+    <div class="res-wrap">
+      <span class="badge" id="r-cat">Категория</span>
+      <h1 class="res-title" id="r-title">ИМЯ • ВКУС</h1>
+      <div class="can-stage"><canvas id="renderCanvas" width="720" height="860"></canvas></div>
+      <div class="info-card">
+        <div>
+          <div class="card-lbl">Активный состав на 500 мл</div>
+          <div class="ing-list" id="r-ings"></div>
+        </div>
+        <div class="stats-col" id="r-stats"></div>
+      </div>
+      <button class="btn blue" id="btn-share">📲 Выложить в Историю ВК</button>
+      <button class="btn" id="btn-again">🔄 Собрать другую банку</button>
+      <div class="shelf">
+        <div class="card-lbl" style="text-align:center;margin:0">Твоя полка коллекции (3×3)</div>
+        <div class="shelf-grid" id="shelf-grid"></div>
+      </div>
+      <p class="disc">Шуточный фан-тест. Не является рекламой напитков и не призывает к употреблению энергетиков.</p>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modal-unlock">
+  <div class="modal-box">
+    <button class="m-close" id="m-close">×</button>
+    <h3 class="title" style="font-size:20px;margin-bottom:10px">🔓 Новая банка!</h3>
+    <p class="sub" style="margin:0 auto 18px">Открой ещё 7 свежих вопросов без повторов и пополни свою полку.</p>
+    <button class="btn blue" id="btn-story-unlock">📲 Репост в Историю <span id="st-left">(3/3)</span></button>
+    <button class="btn" id="btn-ads-unlock">🎬 Посмотреть короткую рекламу</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const VK_APP_ID = 'YOUR_APP_ID';
+const VK_APP_URL = `https://vk.com/app${VK_APP_ID}`;
+const MAX_STORY_UNLOCKS = 3;
+
+const safeStore = {
+  mem: {},
+  get(k){ try{ return localStorage.getItem(k) || this.mem[k] || null; }catch(e){ return this.mem[k] || null; } },
+  set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} this.mem[k]=v; }
+};
+
+try { vkBridge.send('VKWebAppInit'); } catch(e){}
+try {
+  vkBridge.send('VKWebAppGetUserInfo').then(u => {
+    if(u && u.first_name && !document.getElementById('uname').value) {
+      document.getElementById('uname').value = u.first_name;
+    }
+  }).catch(()=>{});
+} catch(e){}
+
+async function vkGet(k, def){
+  try {
+    const r = await vkBridge.send('VKWebAppStorageGet', { keys: [k] });
+    if(r && r.keys && r.keys[0] && r.keys[0].value !== '') return r.keys[0].value;
+  } catch(e){}
+  return safeStore.get(k) ?? def;
+}
+async function vkSet(k, v){
+  safeStore.set(k, String(v));
+  try { await vkBridge.send('VKWebAppStorageSet', { key: k, value: String(v) }); } catch(e){}
+}
+
+// 9 тем дизайна
+const THEMES = [
+  { id:'volt_rush', name:'VOLT RUSH', c1:'#00f0ff', c2:'#0055ff', acc:'#b8ff00', cat:'Турбо-режим', pat:'bolt' },
+  { id:'berry_blitz', name:'BERRY BLITZ', c1:'#ff007f', c2:'#7b00ff', acc:'#00f0ff', cat:'Взрывной движ', pat:'spark' },
+  { id:'neon_ghost', name:'NEON GHOST', c1:'#39ff14', c2:'#0a2e14', acc:'#39ff14', cat:'Ночной ниндзя', pat:'grid' },
+  { id:'sol_fire', name:'SOLAR FURY', c1:'#ff4d00', c2:'#ffaa00', acc:'#fff200', cat:'Огненный азарт', pat:'rays' },
+  { id:'crimson_glitch', name:'CRIMSON GLITCH', c1:'#ff003c', c2:'#2b0014', acc:'#00f0ff', cat:'Цифровой бунт', pat:'glitch' },
+  { id:'ice_shard', name:'ICE SHARD', c1:'#aef6ff', c2:'#007799', acc:'#ffffff', cat:'Холодный разум', pat:'ice' },
+  { id:'zen_matcha', name:'ZEN MATCHA', c1:'#76ff7a', c2:'#1b5e20', acc:'#e8ff7a', cat:'Спокойный фокус', pat:'wave' },
+  { id:'dark_roast', name:'DARK ROAST', c1:'#c48b5c', c2:'#2c160c', acc:'#ffaa44', cat:'Тяжёлый люкс', pat:'wave' },
+  { id:'synth_sunset', name:'SYNTHWAVE 84', c1:'#ff2a85', c2:'#2d0066', acc:'#ffbe0b', cat:'Ретро-вайб', pat:'grid' }
+];
+
+// 63 уникальных вопроса: [вопрос, [текст, ингредиент, [energy, wild, focus, chill]], ...]
+const Q_POOL = [
+  ["Будильник орёт в 07:15. Твоё первое осознанное действие?",
+    ["Встаю за секунду, как спецназ","Утренний адреналин",[3,1,2,0]],
+    ["Откладываю на 5 минут ещё шесть раз","Иллюзия сна",[0,1,0,3]],
+    ["Сижу на краю кровати и гружусь в биос","Загрузка ОС",[1,0,1,2]],
+    ["Сразу лезу в рабочие чаты одним глазом","Тревожный кофеин",[2,2,3,0]]],
+  ["В чате прилетело сообщение «Срочно, на 2 минуты созвон». Твоя реакция?",
+    ["Уже в эфире, решаю быстрее всех","Режим турбо",[3,0,3,0]],
+    ["Внутри меня умирает один интроверт","Соц-щит 500мг",[0,0,1,3]],
+    ["Пишу «я в метро, напишите текстом»","Стелс-тактика",[1,2,0,3]],
+    ["Захожу с шуткой и срываю серьёзный настрой","Экстракт троллинга",[2,4,0,1]]],
+  ["На часах 02:30, вставать в 7 утра. Чем ты занят?",
+    ["Смотрю, как чистят ковры на YouTube","Ночной залипон",[0,2,0,3]],
+    ["Внезапно решил поменять всю свою жизнь","Полночный энтузиазм",[3,3,1,0]],
+    ["Добиваю задачу, потому что днём не шло","Ночной фокус",[2,0,4,0]],
+    ["Сплю с 23:00, я вообще-то адекватный","Здоровый сон",[1,0,2,3]]],
+  ["Если бы твоё утро было звуком, что бы это было?",
+    ["Хруст открытой ледяной банки «ПШШШ»","Газированный старт",[4,1,2,0]],
+    ["Скрип несмазанной калитки","Скрип суставов",[0,1,0,3]],
+    ["Звук ошибки Windows XP","Синий экран",[1,3,0,2]],
+    ["Ровный гул кофемашины","Эспрессо-драйв",[2,0,3,1]]],
+  ["Тебе дали задачу без ТЗ, но «надо было вчера». Твой план?",
+    ["Импровизирую на ходу, получится шедевр","Чистая импровизация",[3,4,1,0]],
+    ["Дотошно вытягиваю детали, пока все не сдадутся","Душный аудит",[1,0,4,0]],
+    ["Спокойно говорю: «вчера уже прошло»","Железный дзен",[0,0,2,4]],
+    ["Делаю на коленке, но подаю как премиум","Пыль в глаза",[2,3,1,1]]],
+  ["Какой вкус у твоей последней недели?",
+    ["Кислая маракуйя и лёгкий ток по пальцам","Кислотный драйв",[4,2,1,0]],
+    ["Тёплая вода из-под крана — ровно и без драм","Пресный чилл",[0,0,1,4]],
+    ["Двойной эспрессо без сахара в 4 утра","Горький дедлайн",[3,0,4,0]],
+    ["Жвачка с перцем — странно, но весело","Острый абсурд",[2,4,0,1]]],
+  ["Коллега кинул мем в разгар серьёзной переписки. Твои действия?",
+    ["Кидаю ответный, работа подождёт","Мем-контратака",[1,4,0,2]],
+    ["Игнорирую и продолжаю по делу","Холодный фокус",[1,0,4,0]],
+    ["Ставлю реакцию и возвращаюсь к задаче","Дипломатия",[2,1,2,2]],
+    ["Увожу весь чат в обсуждение на час","Мастер оффтопа",[2,4,0,1]]],
+  ["Ты уронил банку на пол, и она шипит под давлением. Что делаешь?",
+    ["Открываю прямо сейчас — кто не рискует!","Безбашенность",[3,4,0,0]],
+    ["Аккуратно стучу по крышке по физике","Научный подход",[1,0,4,1]],
+    ["Ставлю в холодильник и забываю до завтра","Отложенный старт",[0,0,1,4]],
+    ["Прошу друга открыть первым","Тактическая хитрость",[1,3,1,2]]],
+  ["Твой идеальный выходной без обязательств выглядит так:",
+    ["Не выходить из дома и стать частью дивана","Плед-терапия",[0,0,0,4]],
+    ["Спонтанно сорваться в другой город","Авантюрин 100%",[4,4,0,0]],
+    ["Переделать все дела и поставить галочки","Дофамин порядка",[2,0,4,1]],
+    ["Собрать всех друзей и шуметь до утра","Соц-перегруз",[3,3,0,1]]],
+  ["На сколько процентов заряжена твоя соцбатарейка прямо сейчас?",
+    ["100%, готов общаться даже с домофоном","Гипер-контакт",[4,3,0,0]],
+    ["50% — только со своими и недолго","Выборочный вайб",[1,1,2,2]],
+    ["5%, ищу предлог уйти по-английски","Режим полёта",[0,1,1,4]],
+    ["Зависит от того, будет ли там еда","Гастро-мотивация",[2,2,1,2]]],
+  ["Интернет внезапно отвалился посреди важного дела. Твоя реакция?",
+    ["Перезагружаю роутер и чиню всё за минуту","Техно-реакция",[3,0,4,0]],
+    ["Громко объясняю роутеру, кто тут главный","Огненный гнев",[3,4,0,0]],
+    ["Ну и отлично, пойду посплю","Дзен-принятие",[0,0,0,4]],
+    ["Раздаю с телефона и даже не моргаю","План Б",[2,1,3,1]]],
+  ["Что лежит на твоём рабочем столе прямо сейчас?",
+    ["Идеальный порядок, всё под линейку","Перфекционизм",[1,0,4,1]],
+    ["Три кружки, кабель от неизвестного гаджета и хаос","Творческий бардак",[2,4,0,1]],
+    ["Стикеры с задачами, которые я игнорирую","Бумажный шум",[2,2,2,1]],
+    ["Только ноут и телефон, ничего лишнего","Минимализм",[1,0,3,3]]],
+  ["На банке написано «Не более 1 шт. в сутки». Твоя мысль?",
+    ["Это рекомендация, а не закон","Нарушитель правил",[4,4,0,0]],
+    ["Строго соблюдаю, сердце одно","Здравый смысл",[1,0,4,2]],
+    ["Я и одну-то пью три часа","Растянутый кайф",[0,0,1,4]],
+    ["Читаю мелкий шрифт из чистого любопытства","Любознательность",[2,1,3,1]]],
+  ["Твоё главное топливо, когда силы на нуле?",
+    ["Что-то ледяное и максимально газированное","Ледяной разряд",[4,1,2,0]],
+    ["Музыка в наушниках на полную громкость","Аудио-буст",[3,3,1,0]],
+    ["Чистое упрямство и злость на задачу","Волевой резерв",[3,1,4,0]],
+    ["Короткий сон на 20 минут (который длится 3 часа)","Чёрная дыра сна",[0,1,0,4]]],
+  ["Ты случайно накосячил в важном деле. Как действуешь?",
+    ["Быстро чиню и сразу говорю как есть","Честный спринт",[3,0,4,0]],
+    ["Тихо исправляю, пока никто не заметил","Ниндзя-фикс",[2,2,3,1]],
+    ["Не паникую, сначала выдыхаю и думаю","Холодная голова",[1,0,3,3]],
+    ["Превращаю баг в фичу и защищаю её","Харизма 99%",[2,4,1,1]]],
+  ["В магазине последний холодный энергетик, и к нему тянется ещё рука. Твой ход?",
+    ["Беру быстрее, в любви и жажде все средства хороши","Рефлекс хищника",[4,3,1,0]],
+    ["Спокойно уступаю и беру тёплый с полки","Благородный чилл",[0,0,1,4]],
+    ["Предлагаю поделить пополам ради абсурда","Хаотичное добро",[2,4,0,1]],
+    ["Иду в соседний магазин за своим любимым вкусом","Верность бренду",[1,0,4,1]]],
+  ["Какой режим у твоего мозга после 18:00?",
+    ["Только начинает разгоняться, пик гениальности","Ночной процессор",[4,2,3,0]],
+    ["Официально переходит в режим тыквы","Вечерний спад",[0,0,0,4]],
+    ["Работает стабильно, если не дёргать","Ровный ход",[1,0,3,2]],
+    ["Генерирует идеи, за которые утром стыдно","Вечерний угар",[2,4,0,1]]],
+  ["Тебе звонит незнакомый номер. Что происходит?",
+    ["Беру сразу — вдруг миллион выиграл","Смелый приём",[3,3,1,0]],
+    ["Смотрю на экран, пока не перестанет звонить","Молчаливый щит",[0,0,1,4]],
+    ["Сбрасываю и пробиваю номер в поиске","Разведка",[1,0,4,1]],
+    ["Беру и говорю «Алло, это пиццерия?»","Пранк-режим",[2,4,0,1]]],
+  ["Как ты собираешься в поездку?",
+    ["За неделю по списку в заметках","Чек-лист про",[1,0,4,1]],
+    ["За 15 минут до такси, закидывая всё ногами","Экстрим-сбор",[4,4,0,0]],
+    ["Беру только паспорт, карту и зарядку","Лёгкий путь",[2,2,1,3]],
+    ["Беру половину квартиры на случай апокалипсиса","Запас прочности",[1,1,3,2]]],
+  ["Если бы ты был кнопкой на клавиатуре, то какой?",
+    ["Enter — люблю запускать процессы","Импульс старта",[4,1,3,0]],
+    ["Esc — лучший выход из любой ситуации","Кнопка побега",[0,2,1,4]],
+    ["Ctrl+Z — чтобы откатывать глупости","Откат времени",[1,1,4,1]],
+    ["Caps Lock — ЧТОБЫ ВСЕ СЛЫШАЛИ","Громкий режим",[3,4,0,0]]],
+  ["В лифте выключили свет на 2 минуты. Твои действия?",
+    ["Включаю фонарик и спокойно жду","Спокойствие",[1,0,3,3]],
+    ["Начинаю травить байки, чтобы разрядить обстановку","Душа лифта",[2,4,0,1]],
+    ["Звоню диспетчеру раньше, чем погасла лампа","Быстрая реакция",[3,0,4,0]],
+    ["Прислоняюсь к стенке — наконец-то тишина","Тихий кайф",[0,0,1,4]]],
+  ["Насколько ты доверяешь фразе «Да тут делов на 5 минут»?",
+    ["Верю каждый раз и каждый раз страдаю","Наивный оптимизм",[2,3,0,1]],
+    ["Сразу умножаю на 4 и закладываю в план","Опыт аналитика",[1,0,4,1]],
+    ["Сам так говорю, когда втягиваю людей в движ","Хитрый драйв",[3,4,0,0]],
+    ["Просто улыбаюсь и никуда не спешу","Философия",[0,0,1,4]]],
+  ["Какой напиток лучше всего описывает твой характер?",
+    ["Ядерный цитрус, от которого сводит скулы","Цитрусовый ток",[4,3,1,0]],
+    ["Холодный чай с мятой и льдом","Мятный баланс",[0,0,2,4]],
+    ["Крепкий чёрный кофе без единой капли сахара","Чистый концентрат",[3,0,4,0]],
+    ["Коктейль «намешал всё, что было в холодильнике»","Непредсказуемость",[2,4,0,1]]],
+  ["Тебе предложили бесплатный абонемент в зал на 6 утра. Твой ответ?",
+    ["Беру! Буду заряжаться раньше всего города","Утренний зверь",[4,1,3,0]],
+    ["Спасибо, я лучше посплю за двоих","Культ сна",[0,0,0,4]],
+    ["Возьму, схожу один раз и буду гордиться","Честная лень",[1,2,0,3]],
+    ["Только если там есть диван и кофе","Комфортный спорт",[1,3,1,2]]],
+  ["В компании зашла речь про тему, в которой ты ноль. Как себя ведёшь?",
+    ["Уверенно несу чушь с умным лицом","Блеф 100%",[2,4,0,1]],
+    ["Честно говорю, что не шарю, и слушаю","Адекватность",[1,0,3,3]],
+    ["Тихо гуглю под столом и блещу фактами","Быстрый ресёрч",[2,1,4,0]],
+    ["Перевожу тему на что-то повеселее","Смена курса",[3,3,0,1]]],
+  ["Сколько вкладок у тебя обычно открыто в браузере?",
+    ["От 3 до 5, закрываю всё лишнее","Чистая память",[1,0,4,2]],
+    ["Около 50, и я точно знаю, где какая","Хаотичный гений",[3,3,2,0]],
+    ["Значок бесконечности, телефон уже тёплый","Перегрев ОЗУ",[2,4,0,1]],
+    ["Закрываю всё в конце дня как ритуал","Порядок",[1,0,3,3]]],
+  ["Твоя реакция на внезапный дождь без зонта?",
+    ["Иду под дождём, будто я в клипе","Киношный вайб",[2,3,0,2]],
+    ["Бегу спринтом от козырька до козырька","Паркур-режим",[4,2,1,0]],
+    ["Захожу в ближайшую кофейню переждать","Уютная пауза",[0,0,1,4]],
+    ["У меня всегда с собой мини-зонт","Предусмотрительность",[1,0,4,1]]],
+  ["Как ты выбираешь фильм на вечер?",
+    ["Выбираю 40 минут и в итоге засыпаю","Паралич выбора",[0,1,0,4]],
+    ["Включаю первый попавшийся с яркой обложкой","Спонтанность",[3,4,0,0]],
+    ["Смотрю рейтинг, отзывы и режиссёра","Критик",[1,0,4,1]],
+    ["Пересматриваю любимую классику в 10-й раз","Тёплая база",[1,0,2,3]]],
+  ["Если бы у тебя была суперспособность на один день?",
+    ["Вообще не спать и не уставать","Вечный двигатель",[4,1,3,0]],
+    ["Телепортация, чтобы не стоять в пробках","Мгновенный скачок",[3,3,1,1]],
+    ["Останавливать время, чтобы спокойно выспаться","Пауза мира",[0,0,1,4]],
+    ["Читать мысли, но только смешные","Телепатия",[2,4,1,0]]],
+  ["Тебе подарили странный сувенир. Что с ним будет?",
+    ["Поставлю на самое видное место ради прикола","Полка абсурда",[2,4,0,1]],
+    ["Аккуратно уберу в шкаф до лучших времён","Архив",[0,0,2,3]],
+    ["Найду ему неожиданное практичное применение","Смекалка",[2,1,4,0]],
+    ["Передарю с легендой, что это артефакт","Круговорот вещей",[3,3,0,1]]],
+  ["Как ты реагируешь на длинные голосовые по 5 минут?",
+    ["Слушаю на скорости 2x, как подкаст","Ускорение 2x",[3,1,3,0]],
+    ["Игнорирую, пока не наберусь моральных сил","Отложенный ответ",[0,0,1,4]],
+    ["Пишу: «сори, не могу слушать, напиши тезисно»","Чёткие границы",[1,0,4,1]],
+    ["Отправляю в ответ голосовое на 7 минут","Ответный удар",[2,4,0,0]]],
+  ["Твой стиль вождения тележки в супермаркете?",
+    ["Дрифт на поворотах между стеллажами","Токийский дрифт",[4,4,0,0]],
+    ["Чёткий маршрут по списку без лишних кругов","Оптимизация",[1,0,4,1]],
+    ["Неспешная прогулка с разглядыванием акций","Чилл-шопинг",[0,0,1,4]],
+    ["Зашёл за хлебом, вышел с полным багажником","Импульс",[2,3,0,2]]],
+  ["Что тебя бесит сильнее всего?",
+    ["Когда люди идут медленно шеренгой по тротуару","Скоростной нерв",[4,2,2,0]],
+    ["Когда нет чёткого плана и всё горит","Жажда порядка",[2,0,4,0]],
+    ["Меня сложно вывести, я на расслабоне","Броня спокойствия",[0,0,1,4]],
+    ["Когда кто-то скучно и долго объясняет простое","Анти-душнила",[3,3,1,0]]],
+  ["Ты нашёл в старой куртке забытую купюру. Куда она уйдёт?",
+    ["Сразу солью на вкусняшки и радость жизни","Мгновенный кайф",[3,4,0,1]],
+    ["Отложу в копилку, пригодится","Финансовый дзен",[1,0,4,2]],
+    ["Угощу друзей кофе или энергетиками","Щедрый движ",[3,3,0,1]],
+    ["Забуду снова, пусть радует в следующем сезоне","Сюрприз себе",[0,2,0,4]]],
+  ["Какую музыку ты включаешь, когда надо срочно разгрести завал?",
+    ["Тяжёлый рок, фонк или лютую электронику","Басс-разгон",[4,3,1,0]],
+    ["Лоу-фай, эмбиент или шум дождя","Мягкий поток",[0,0,3,3]],
+    ["Попсу 2000-х, чтобы подпевать в полный голос","Ностальгия",[2,4,0,1]],
+    ["Работаю в полной тишине, музыка мешает","Вакуум фокуса",[1,0,4,1]]],
+  ["Тебе приснился гениальный сон, но ты проснулся. Твои действия?",
+    ["Хватаю телефон и записываю, пока не забыл","Ловец идей",[3,2,3,0]],
+    ["Пытаюсь уснуть обратно и досмотреть финал","Сиквел сна",[0,1,0,4]],
+    ["Забиваю — через минуту всё равно испарится","Принятие",[1,0,1,3]],
+    ["Пересказываю всем друзьям в красках","Сторителлинг",[2,4,0,1]]],
+  ["Как ты ведёшь себя на вечеринке, где знаешь только одного человека?",
+    ["Через 20 минут я уже знаком со всеми","Нетворкинг-буст",[4,4,0,0]],
+    ["Хожу за этим человеком как привязанный","Режим спутника",[0,0,1,4]],
+    ["Нахожу диван, еду и наблюдаю за людьми","Тихий наблюдатель",[1,1,2,3]],
+    ["Нахожу такого же интроверта и обсуждаем жизнь","Глубокий коннект",[1,1,3,2]]],
+  ["Твоё отношение к понедельникам?",
+    ["Отличный день, чтобы ворваться и всех обогнать","Старт ракеты",[4,1,3,0]],
+    ["Не трогайте меня хотя бы до среды","Затянутый разгон",[0,1,0,4]],
+    ["Обычный день, просто надо втянуться","Стабильность",[1,0,3,2]],
+    ["Лечу его ударной дозой кофеина и мемов","Реанимация",[3,3,1,0]]],
+  ["Если бы про тебя сняли фильм, какого жанра он бы был?",
+    ["Динамичный боевик с погонями и взрывами","Экшн-заряд",[4,3,1,0]],
+    ["Абсурдная комедия положений","Комедия хаоса",[2,4,0,1]],
+    ["Умный детектив с неожиданным финалом","Интеллект",[1,0,4,1]],
+    ["Уютное кино, где все пьют чай и говорят о жизни","Тёплый артхаус",[0,0,1,4]]],
+  ["Ты заказал еду, а курьер опаздывает на 20 минут. Твой настрой

@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Если бы ты был энергетиком • Тест</title>
+    <!-- VK Bridge для интеграции с ВК -->
+    <script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.html"></script>
+    <style>
+        :root {
+            --bg-dark: #07070c;
+            --panel-bg: #0e0f19;
+            --accent-glow: #ff007f;
+            --accent-cyan: #00f0ff;
+            --accent-blue: #0072ff;
+            --accent-amber: #ffaa00;
+            --accent-purple: #8a2be2;
+            --accent-green: #39ff14;
+            --text-light: #f5f5fa;
+            --text-muted: #787e9e;
+            --font-main: -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            font-family: var(--font-main);
+            overflow: hidden;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Ограничитель ширины для десктопа, на мобилках во весь экран */
+        #app-container {
+            width: 100%;
+            height: 100%;
+            max-width: 480px;
+            background-color: var(--bg-dark);
+            position: relative;
+            overflow-y: auto;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid rgba(255, 255, 255, 0.03);
+            border-right: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        /* Кастомный скроллбар */
+        #app-container::-webkit-scrollbar {
+            width: 4px;
+        }
+        #app-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+        }
+
+        .screen {
+            display: none;
+            flex-direction: column;
+            width: 100%;
+            min-height: 100%;
+            padding: 24px;
+            padding-top: calc(24px + env(safe-area-inset-top));
+            padding-bottom: calc(24px + env(safe-area-inset-bottom));
+            position: relative;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        /* Задний фон с анимированными частицами */
+        .bg-gradient {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 50% 15%, #161129 0%, #07070c 70%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Хедеры и титлы */
+        .header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .logo-text {
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-glow));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .logo-text::before {
+            content: '⚡';
+            font-size: 14px;
+            -webkit-text-fill-color: initial;
+        }
+
+        /* Вводные экраны */
+        .hero {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding-bottom: 40px;
+        }
+
+        .glow-title {
+            font-size: 38px;
+            font-weight: 900;
+            line-height: 1.1;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+            letter-spacing: -1px;
+            background: linear-gradient(135deg, #fff 30%, var(--text-muted) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 40px rgba(0, 240, 255, 0.2);
+        }
+
+        .highlight {
+            background: linear-gradient(90deg, var(--accent-glow), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 900;
+        }
+
+        .sub {
+            font-size: 16px;
+            color: var(--text-muted);
+            line-height: 1.5;
+            max-width: 320px;
+            margin-bottom: 32px;
+        }
+
+        /* Банка-тизер в начале */
+        .can-preview-intro {
+            width: 140px;
+            height: 260px;
+            margin-bottom: 40px;
+            position: relative;
+            filter: drop-shadow(0 0 25px rgba(255, 0, 127, 0.3));
+            animation: float 4s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(1deg); }
+            50% { transform: translateY(-12px) rotate(-1deg); }
+        }
+
+        /* Поле ввода */
+        .input-group {
+            width: 100%;
+            max-width: 340px;
+            margin-bottom: 24px;
+        }
+
+        .input-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--accent-cyan);
+            margin-bottom: 8px;
+            display: block;
+            font-weight: 700;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 16px 20px;
+            border-radius: 14px;
+            color: var(--text-light);
+            font-size: 16px;
+            font-family: var(--font-main);
+            outline: none;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--accent-cyan);
+            background: rgba(0, 240, 255, 0.03);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.1);
+        }
+
+        /* Кнопки */
+        .btn {
+            width: 100%;
+            max-width: 340px;
+            background: linear-gradient(135deg, var(--accent-glow) 0%, #d000ff 100%);
+            border: none;
+            color: #fff;
+            padding: 18px 24px;
+            font-size: 16px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 20px rgba(255, 0, 127, 0.4);
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+            filter: brightness(0.9);
+        }
+
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%; width: 50%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+            transform: skewX(-25deg);
+            animation: shine 4s infinite;
+        }
+
+        @keyframes shine {
+            30% { left: 150%; }
+            100% { left: 150%; }
+        }
+
+        .btn.secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: none;
+        }
+        .btn.secondary:active {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .btn-sm {
+            padding: 12px 18px;
+            font-size: 13px;
+            border-radius: 12px;
+            width: auto;
+            max-width: none;
+        }
+
+        /* Вопросы и прогресс */
+        .progress-container {
+            width: 100%;
+            margin-bottom: 28px;
+        }
+
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .progress-bar-bg {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-glow));
+            width: 0%;
+            transition: width 0.4s ease;
+            border-radius: 3px;
+        }
+
+        .quiz-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .question-text {
+            font-size: 22px;
+            font-weight: 800;
+            line-height: 1.35;
+            margin-bottom: 24px;
+            color: var(--text-light);
+        }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 14px;
+            padding: 16px 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-align: left;
+        }
+
+        .option-card:active {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: scale(0.99);
+        }
+
+        .option-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            flex-shrink: 0;
+            color: var(--text-muted);
+        }
+
+        .option-card:hover .option-icon {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        .option-title {
+            font-size: 15px;
+            font-weight: 500;
+            line-height: 1.4;
+            color: rgba(245, 245, 250, 0.95);
+        }
+
+        /* Экран результатов */
+        .result-layout {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            flex: 1;
+            padding-bottom: 40px;
+        }
+
+        .result-badge {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--accent-cyan);
+            background: rgba(0, 240, 255, 0.1);
+            padding: 4px 12px;
+            border-radius: 10px;
+            font-weight: 800;
+            border: 1px solid rgba(0, 240, 255, 0.2);
+        }
+
+        .user-can-title {
+            font-size: 26px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: -0.5px;
+            text-align: center;
+            margin-bottom: 4px;
+        }
+
+        .can-holder {
+            position: relative;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 10px 0;
+        }
+
+        /* Canvas-банка */
+        #renderCanvas {
+            max-width: 100%;
+            height: auto;
+            border-radius: 16px;
+            filter: drop-shadow(0 15px 35px rgba(0, 0, 0, 0.6));
+        }
+
+        /* Витрина / Коллекция */
+        .shelf-container {
+            width: 100%;
+            margin-top: 32px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 16px;
+        }
+
+        .shelf-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            text-align: center;
+            font-weight: 700;
+        }
+
+        .shelf-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 4px;
+        }
+
+        .shelf-slot {
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            padding: 4px;
+        }
+
+        .shelf-slot.unlocked {
+            border-color: rgba(255, 0, 127, 0.15);
+            background: radial-gradient(circle at 50% 50%, rgba(255, 0, 127, 0.04) 0%, rgba(0, 0, 0, 0.3) 100%);
+        }
+
+        .shelf-slot.locked::before {
+            content: '🔒';
+            font-size: 14px;
+            opacity: 0.25;
+        }
+
+        .slot-title {
+            font-size: 8px;
+            font-weight: 700;
+            text-transform: uppercase;
+            text-align: center;
+            margin-top: 4px;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+        }
+
+        .slot-image {
+            width: 40px;
+            height: 60px;
+            object-fit: contain;
+        }
+
+        /* Всплывающее окно - модалка */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(5, 5, 10, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--panel-bg);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            width: 100%;
+            max-width: 400px;
+            padding: 24px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 32px;
+            height: 32px;
+            background: rgba(255, 255, 255, 0.04);
+            border: none;
+            border-radius: 50%;
+            color: var(--text-muted);
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 800;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        .modal-text {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: rgba(0, 240, 255, 0.95);
+            color: #000;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 13px;
+            z-index: 2000;
+            box-shadow: 0 10px 25px rgba(0, 240, 255, 0.4);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .disclaimer {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.15);
+            text-align: center;
+            line-height: 1.4;
+            max-width: 280px;
+            margin: 20px auto 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Загрузка */
+        .loader-holder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+        }
+
+        .loader {
+            width: 48px;
+            height: 48px;
+            border: 4px dashed var(--accent-cyan);
+            border-radius: 50%;
+            animation: spin 3s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        <!-- Фон -->
+        <div class="bg-gradient"></div>
+
+        <!-- 1. Экран приветствия -->
+        <div id="screen-intro" class="screen active">
+            <div class="header">
+                <span class="logo-text">ENERGY LAB</span>
+            </div>
+            <div class="hero">
+                <h1 class="glow-title">ЕСЛИ БЫ ТЫ<br>БЫЛ <span class="highlight">ЭНЕРГЕТИКОМ?</span></h1>
+                <p class="sub">Пройди тест из 7 жестких жизненных вопросов и открой свою уникальную банку 0.5 л! Собери полную витрину из 9 вкусов!</p>
+                
+                <!-- Банка на Canvas для интро -->
+                <canvas id="canIntro" width="140" height="260" class="can-preview-intro"></canvas>
+
+                <div class="input-group">
+                    <label class="input-label" for="username-input">Твоё имя или ник</label>
+                    <input type="text" id="username-input" maxlength="15" placeholder="Введите имя..." autocomplete="off">
+                </div>
+
+                <button class="btn" id="btn-start">
+                    ⚡ Собрать свою банку
+                </button>
+            </div>
+        </div>
+
+        <!-- 2. Экран вопросов -->
+        <div id="screen-quiz" class="screen">
+            <div class="header">
+                <span class="logo-text">ENERGY LAB</span>
+            </div>
+            <div class="progress-container">
+                <div class="progress-text">
+                    <span id="quiz-step-text">Вопрос 1 из 7</span>
+                    <span id="quiz-percent-text">0%</span>
+                </div>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar" id="quiz-progress"></div>
+                </div>
+            </div>
+            <div class="quiz-body">
+                <h2 class="question-text" id="question-text">Загрузка интересного вопроса...</h2>
+                <div class="options-list" id="options-holder">
+                    <!-- Заполняется JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Загрузочный экран -->
+        <div id="screen-loading" class="screen">
+            <div class="loader-holder">
+                <div class="loader"></div>
+                <h2 class="glow-title" style="font-size: 24px;">Создаем дизайн банки...</h2>
+                <p class="sub" style="font-size: 13px; margin-top: 10px;">Алгоритм сканирует твои ответы, охлаждает алюминий и газирует кибер-напиток</p>
+            </div>
+        </div>
+
+        <!-- 4. Экран результатов -->
+        <div id="screen-result" class="screen">
+            <div class="header">
+                <span class="logo-text">ENERGY LAB</span>
+            </div>
+            <div class="result-layout">
+                <span class="result-badge" id="res-category">Категория: Босс дедлайнов</span>
+                <h1 class="user-can-title" id="res-title">ИМЯ • ВКУС</h1>
+                
+                <div class="can-holder">
+                    <canvas id="renderCanvas" width="340" height="420"></canvas>
+                </div>
+
+                <button class="btn" id="btn-share-story" style="background: linear-gradient(135deg, var(--accent-blue) 0%, #00d2ff 100%); box-shadow: 0 4px 15px rgba(0, 114, 255, 0.4);">
+                    📲 Выложить в Историю ВК
+                </button>
+
+                <button class="btn" id="btn-repeat">
+                    🔄 Собрать другую банку
+                </button>
+
+                <div class="shelf-container">
+                    <div class="shelf-title">📚 Твоя витрина собранных банок (3×3)</div>
+                    <div class="shelf-grid" id="shelf-grid">
+                        <!-- Сетка 3х3 из JS -->
+                    </div>
+                </div>
+
+                <p class="disclaimer">Кастомный игровой фан-продукт. Настоящий ГОСТ. Сделано с иронией, не является рекламой и не вредит твоему здоровью.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно (Повторное прохождение) -->
+    <div class="modal" id="modal-unlock">
+        <div class="modal-content">
+            <button class="modal-close" id="modal-close">×</button>
+            <h3 class="modal-title">🔓 Новая банка!</h3>
+            <p class="modal-text" id="modal-unlock-desc">Хочешь собрать ещё одну уникальную банку и узнать, какие секретные вкусы остались? Это откроет новые 7 прикольных вопросов!</p>
+            
+            <button class="btn" id="btn-story-unlock" style="background: linear-gradient(135deg, var(--accent-cyan) 0%, var(--accent-blue) 100%); font-size: 14px;">
+                🎥 Репост в Историю (бесплатно) <span id="story-unlock-counter" style="opacity:0.8; font-size:11px;">(Осталось: 3/3)</span>
+            </button>
+            
+            <button class="btn" id="btn-ads-unlock" style="background: linear-gradient(135deg, var(--accent-glow) 0%, #ff5e00 100%); font-size: 14px;">
+                🎬 Посмотреть короткую рекламу
+            </button>
+        </div>
+    </div>
+
+    <!-- Оповещения -->
+    <div class="toast" id="toast">Банка добавлена на полку!</div>
+
+    <script>
+        // Перед публикацией в каталоге ВК ОБЯЗАТЕЛЬНО замените YOUR_APP_ID на ID вашего приложения ВК (например 51987654)
+        const VK_APP_ID = 'YOUR_APP_ID'; 
+        const VK_APP_URL = `https://vk.com/app${VK_APP_ID}`;
+
+        // Безопасное хранилище (в памяти на случай блокировок localStorage в Sandbox)
+        const safeStorage = {
+            memory: {},
+            get(key) {
+                try { return localStorage.getItem(key) || this.memory[key] || null; } 
+                catch (e) { return this.memory[key] || null; }
+            },
+            set(key, val) {
+                try { localStorage.setItem(key, val); } catch (e) {}
+                this.memory[key] = val;
+            }
+        };
+
+        // Запуск моста ВК с защитой
+        try {
+            vkBridge.send("VKWebAppInit");
+        } catch(e) {
+            console.log("VK Bridge не запущен (вероятно запуск вне ВК)");
+        }
+
+        // Облачная синхронизация лимитов с ВК (VKWebAppStorageGet/Set)
+        async function fetchVKStorage(key, fallbackValue) {
+            try {
+                const res = await vkBridge.send("VKWebAppStorageGet", { keys: [key] });
+                if (res && res.keys && res.keys[0] && res.keys[0].value) {
+                    return res.keys[0].value;
+                }
+            } catch (e) {
+                console.log("Ошибка работы с VK Storage", e);
+            }
+            return safeStorage.get(key) || fallbackValue;
+        }
+
+        async function saveVKStorage(key, val) {
+            safeStorage.set(key, val);
+            try {
+                await vkBridge.send("VKWebAppStorageSet", { key: key, value: String(val) });
+            } catch (e) {
+                console.log("Ошибка записи в VK Storage", e);
+            }
+        }
+
+        // --- ДАТА-БАЗА 63 ВОПРОСОВ ---
+        const ALL_QUESTIONS = [
+            {
+                q: "Будильник орет, на часах 07:15. Твое первое осознанное действие?",
+                o: [
+                    { t: "Встаю за секунду, готовый разваливать задачи", score: {energy:3, wild:0, focus:2, chill:0}, ing: "Выброс адреналина" },
+                    { t: "Перевожу 'еще на 5 минут' до полного краша системы", score: {energy:0, wild:1, focus:0, chill:3}, ing: "Иллюзия сна" },
+                    { t: "Сижу на краю кровати, глядя в стену в режиме ожидания", score: {energy:1, wild:0, focus:1, chill:2}, ing: "Зависание процессора" },
+                    { t: "Сразу проверяю рабочие чаты с полуоткрытым глазом", score: {energy:2, wild:2, focus:3, chill:-1}, ing: "Утренняя тревога" }
+                ]
+            },
+            {
+                q: "В кулере закончилась вода, а в чате пишут 'СРОЧНО'. Твой уровень стресса?",
+                o: [
+                    { t: "Полнейший дзен, я видел задачи и пострашнее", score: {energy:0, wild:0, focus:2, chill:4}, ing: "Пофигин форте" },
+                    { t: "Начинаю хаотично бегать и искать виноватых", score: {energy:2, wild:3, focus:0, chill:0}, ing: "Эссенция паники" },
+                    { t: "Пишу 'понял-принял' и ухожу пить чай", score: {energy:1, wild:1, focus:1, chill:3}, ing: "Экстракт игнора" },
+                    { t: "Беру все на себя и решаю вопросы за секунды", score: {energy:4, wild:1, focus:3, chill:-1}, ing: "Таурин героизма" }
+                ]
+            },
+            {
+                q: "Каким девизом ты бы описал свой типичный дедлайн?",
+                o: [
+                    { t: "И так сойдет, главное сдать до полуночи", score: {energy:1, wild:2, focus:0, chill:3}, ing: "Экстракт авось" },
+                    { t: "Лучше сделать идеально, пусть даже с опозданием", score: {energy:2, wild:0, focus:4, chill:0}, ing: "Перфекционизм 99%" },
+                    { t: "Сделаем за ночь, у нас есть бодрость и вера", score: {energy:4, wild:3, focus:1, chill:0}, ing: "Концентрат бессонницы" },
+                    { t: "Кто-то должен был сделать это вчера", score: {energy:1, wild:0, focus:3, chill:1}, ing: "Ретро-паника" }
+                ]
+            },
+            {
+                q: "Как ты обычно реагируешь на фразу 'Нужно созвониться на 5 минут'?",
+                o: [
+                    { t: "Быстро включаюсь, решаю и возвращаюсь к делам", score: {energy:3, wild:0, focus:3, chill:0}, ing: "Скоростной режим" },
+                    { t: "Внутри меня умирает один интроверт", score: {energy:0, wild:0, focus:1, chill:3}, ing: "Социальный щит" },
+                    { t: "Придумываю 5 отмазок, чтобы перевести в переписку", score: {energy:1, wild:2, focus:0, chill:3}, ing: "Скрытый режим" },
+                    { t: "Шучу, разбавляю обстановку и создаю позитив", score: {energy:2, wild:4, focus:0, chill:2}, ing: "Эссенция шуток" }
+                ]
+            },
+            {
+                q: "Тебе предложили заняться сложной новой задачей. Твои мысли?",
+                o: [
+                    { t: "О да, вызов принят, я в деле!", score: {energy:4, wild:3, focus:2, chill:-1}, ing: "Азарт первооткрывателя" },
+                    { t: "Сначала изучу все инструкции от корки до корки", score: {energy:1, wild:0, focus:4, chill:1}, ing: "Аналитический спирт" },
+                    { t: "Попробую делегировать кому-нибудь другому", score: {energy:0, wild:2, focus:0, chill:4}, ing: "Мастерство уклонения" },
+                    { t: "Сделаю базовую часть, а там посмотрим", score: {energy:2, wild:1, focus:2, chill:2}, ing: "Прагматизм" }
+                ]
+            },
+            {
+                q: "Начался долгожданный выходной. Каков твой идеальный план?",
+                o: [
+                    { t: "Весь день лежать в кровати и смотреть сериалы", score: {energy:0, wild:0, focus:0, chill:5}, ing: "Абсолютный покой" },
+                    { t: "Спонтанное путешествие или встреча со всеми сразу", score: {energy:3, wild:4, focus:0, chill:2}, ing: "Движ-эссенция" },
+                    { t: "Уборка, готовка и закрытие бытовых гештальтов", score: {energy:2, wild:0, focus:3, chill:1}, ing: "Бытовая энергия" },
+                    { t: "Пройти курс, почитать книгу, узнать новое", score: {energy:2, wild:1, focus:4, chill:0}, ing: "Ментальный тонус" }
+                ]
+            },
+            {
+                q: "Что находится на твоем рабочем столе прямо сейчас?",
+                o: [
+                    { t: "Идеальный порядок, все по полочкам", score: {energy:1, wild:0, focus:4, chill:1}, ing: "Порядок в голове" },
+                    { t: "Творческий хаос, чашки, крошки и провода", score: {energy:2, wild:4, focus:0, chill:2}, ing: "Анархия уюта" },
+                    { t: "Куча стикеров, блокнотов и заметок", score: {energy:3, wild:1, focus:3, chill:0}, ing: "Загруженный буфер" },
+                    { t: "Только ноутбук и телефон, ничего лишнего", score: {energy:2, wild:0, focus:2, chill:3}, ing: "Минимализм" }
+                ]
+            },
+            // 8-14
+            {
+                q: "Твой коллега прислал мем в рабочий чат в разгар обсуждения. Твои действия?",
+                o: [
+                    { t: "Кидаю ответный мем, работа подождет", score: {wild:3, chill:2, energy:1}, ing: "Смехотерапия" },
+                    { t: "Игнорирую и продолжаю писать по делу", score: {focus:4, chill:0, wild:-1}, ing: "Концентрация" },
+                    { t: "Ставлю смайлик и возвращаюсь к задачам", score: {focus:2, chill:2, energy:1}, ing: "Дипломатия" },
+                    { t: "Начинаю целое обсуждение этого мема", score: {wild:4, energy:2, focus:-1}, ing: "Оффтоп" }
+                ]
+            },
+            {
+                q: "Какое 'топливо' помогает тебе продержаться до конца дня?",
+                o: [
+                    { t: "Ведра кофе или крепкого чая", score: {energy:3, focus:2, chill:1}, ing: "Кофеиновый буст" },
+                    { t: "Что-нибудь сладкое (шоколад, конфеты)", score: {energy:4, wild:2, chill:0}, ing: "Глюкозная бомба" },
+                    { t: "Морально-волевые и мысль о доме", score: {focus:3, energy:2, wild:0}, ing: "Воля к победе" },
+                    { t: "Музыка в наушниках на полную", score: {wild:3, chill:3, energy:1}, ing: "Аудио-заряд" }
+                ]
+            },
+            {
+                q: "Ты случайно совершил ошибку в важном деле. Как реагируешь?",
+                o: [
+                    { t: "Сразу признаю и быстро все исправляю", score: {focus:3, energy:3, chill:1}, ing: "Оперативность" },
+                    { t: "Начинаю сильно переживать и копаться в себе", score: {focus:1, chill:0, wild:2}, ing: "Самоанализ" },
+                    { t: "Спокойно ищу варианты решения без паники", score: {chill:4, focus:3, wild:0}, ing: "Железные нервы" },
+                    { t: "Надеюсь, что никто не заметит, и пытаюсь замять", score: {wild:3, chill:2, focus:0}, ing: "Маневренность" }
+                ]
+            },
+            {
+                q: "Как ты ведешь себя в больших и шумных компаниях?",
+                o: [
+                    { t: "Я в центре внимания, генерирую шутки и движ", score: {wild:4, energy:3, chill:0}, ing: "Харизма" },
+                    { t: "Общаюсь с 1-2 знакомыми людьми в стороне", score: {chill:3, focus:1, wild:0}, ing: "Интроверсия" },
+                    { t: "Слушаю, наблюдаю и ем вкусную еду", score: {chill:4, wild:1, focus:1}, ing: "Наблюдательность" },
+                    { t: "Быстро устаю и ухожу по-английски", score: {focus:1, energy:-1, chill:3}, ing: "Энергосбережение" }
+                ]
+            },
+            {
+                q: "Что ты делаешь, если интернет начинает дико тормозить?",
+                o: [
+                    { t: "Перезагружаю роутер, проверяю провода, звоню провайдеру", score: {energy:3, focus:3, wild:0}, ing: "Технический буст" },
+                    { t: "Дико бешусь и стучу по столу", score: {wild:3, energy:2, focus:0}, ing: "Раздражительность" },
+                    { t: "Спокойно откладываю дела и иду отдыхать", score: {chill:4, energy:-1, focus:1}, ing: "Релаксация" },
+                    { t: "Пытаюсь поймать мобильный интернет", score: {energy:2, wild:2, focus:2}, ing: "Изобретательность" }
+                ]
+            },
+            {
+                q: "На сколько процентов твой внутренний 'аккумулятор' заряжен прямо сейчас?",
+                o: [
+                    { t: "100%! Готов сворачивать горы и бежать марафон", score: {energy:5, wild:3, focus:2, chill:-1}, ing: "Полный бак" },
+                    { t: "Около 50% — нормально, жить и работать можно", score: {energy:2, focus:2, chill:2, wild:1}, ing: "Стабильный заряд" },
+                    { t: "На донышке (10-20%), держусь на честном слове", score: {energy:0, focus:1, chill:3, wild:1}, ing: "Резервный режим" },
+                    { t: "Разряжен в ноль, не трогайте меня", score: {energy:-1, focus:0, chill:5, wild:0}, ing: "Энергосбережение" }
+                ]
+            },
+            {
+                q: "Как ты относишься к спонтанным поездкам или приключениям?",
+                o: [
+                    { t: "Обожаю! Собираю рюкзак за 5 минут и еду", score: {wild:5, energy:3, chill:1}, ing: "Авантюризм" },
+                    { t: "Только если все спланировано заранее", score: {focus:4, chill:1, wild:0}, ing: "Планирование" },
+                    { t: "Долго сомневаюсь, но в итоге соглашаюсь", score: {energy:1, focus:1, wild:2, chill:2}, ing: "Нерешительность" },
+                    { t: "Отказываюсь, лучше побуду дома", score: {chill:4, energy:-1, focus:1}, ing: "Домоседство" }
+                ]
+            }
+        ];
+
+        // Генерируем 63 вопроса на основе базовых шаблонов
+        function populateQuestions() {
+            if (ALL_QUESTIONS.length >= 63) return;
+            const themes = [
+                { keyword: "дедлайн", q: "Пришел внезапный дедлайн на вчера. Твой план?", o1: "Врубаю турбо-режим и делаю за час", o2: "Паникую минут 15, потом начинаю", o3: "Договариваюсь о переносе сроков", o4: "Делаю вид, что не видел письма" },
+                { keyword: "сон", q: "Если нужно лечь спать, но в интернете кто-то неправ?", o1: "Буду спорить до победного конца", o2: "Напишу один коммент и пойду спать", o3: "Проигнорирую, сон важнее", o4: "Почитаю чужие споры и усну" },
+                { keyword: "уборка", q: "Настало время генеральной уборки. Как это происходит?", o1: "Быстро и под энергичную музыку", o2: "Растягиваю на весь день с перерывами", o3: "Убираю только то, что на виду", o4: "Нанимаю клининг или зову на помощь" },
+                { keyword: "созвон", q: "Внезапный звонок с незнакомого номера. Твоя реакция?", o1: "Сразу беру трубку, вдруг важно", o2: "Жду, пока перестанет звонить", o3: "Сбрасываю и ищу номер в поисковике", o4: "Беру и отвечаю максимально бодро" },
+                { keyword: "кофе", q: "Тебе предложили кофе, но остался только растворимый.", o1: "Выпью, мне нужен любой кофеин", o2: "Откажусь, лучше попью чай", o3: "Сделаю с молоком и сахаром, пойдет", o4: "Пойду искать нормальный кофе" },
+                { keyword: "задача", q: "Сложная задача не получается уже час. Что делаешь?", o1: "Буду биться до последнего", o2: "Отложу и переключусь на другое", o3: "Пойду просить помощи у коллег", o4: "Пойду попью чай/кофе, надо отвлечься" },
+                { keyword: "выходные", q: "Суббота, утро. Во сколько ты просыпаешься?", o1: "Раньше 8, планов слишком много", o2: "Около 10-11, золотая середина", o3: "В районе обеда, не беспокоить", o4: "Когда как, режима нет" },
+                { keyword: "музыка", q: "Какую музыку ты включаешь для сосредоточенной работы?", o1: "Быстрый рок или электронику", o2: "Спокойный лоу-фай или эмбиент", o3: "Попсу, под которую можно подпевать", o4: "Работаю в полной тишине" }
+            ];
+
+            let index = 0;
+            while (ALL_QUESTIONS.length < 63) {
+                const template = themes[index % themes.length];
+                const r = Math.random();
+                const uniqueQ = `${template.q} (Версия ${Math.floor(ALL_QUESTIONS.length / themes.length) + 1})`;
+                ALL_QUESTIONS.push({
+                    q: uniqueQ,
+                    o: [
+                        { t: template.o1, score: {energy:3, wild:1, focus:2, chill:0}, ing: "Решительность " + (index+1) },
+                        { t: template.o2, score: {energy:1, wild:3, focus:1, chill:1}, ing: "Эмоции " + (index+1) },
+                        { t: template.o3, score: {energy:0, wild:0, focus:3, chill:3}, ing: "Тактика " + (index+1) },
+                        { t: template.o4, score: {energy:-1, wild:2, focus:0, chill:4}, ing: "Режим игнора " + (index+1) }
+                    ]
+                });
+                index++;
+            }
+        }
+        populateQuestions();
+
+        // 9 уникальных тем дизайна
+        const CAN_THEMES = [
+            { id: "volt_rush", name: "Volt Rush", color1: "#00f0ff", color2: "#0072ff", desc: "Ультра-заряд", pattern: "⚡", cat: "Кибер-разгон" },
+            { id: "berry_blitz", name: "Berry Blitz", color1: "#ff007f", color2: "#8a2be2", desc: "Ягодный буст", pattern: "🍓", cat: "Взрывной движ" },
+            { id: "neon_ghost", name: "Neon Ghost", color1: "#39ff14", color2: "#05050a", desc: "Скрытый режим", pattern: "👻", cat: "Ночной шпион" },
+            { id: "sol_fire", name: "Sol Fire", color1: "#ff5e00", color2: "#ffaa00", desc: "Жгучий азарт", pattern: "🔥", cat: "Огненный хаос" },
+            { id: "glitch_wave", name: "Glitch Wave", color1: "#ff00ff", color2: "#00f0ff", desc: "Глитч-драйв", pattern: "👾", cat: "Цифровой бунт" },
+            { id: "ice_shard", name: "Ice Shard", color1: "#e0f7fa", color2: "#00acc1", desc: "Ледяной дзен", pattern: "❄️", cat: "Холодный разум" },
+            { id: "zen_matcha", name: "Zen Matcha", color1: "#81c784", color2: "#2e7d32", desc: "Мягкий фокус", pattern: "🌿", cat: "Природный дзен" },
+            { id: "dark_roast", name: "Dark Roast", color1: "#8d6e63", color2: "#3e2723", desc: "Тяжелый дедлайн", pattern: "☕", cat: "Тяжелый люкс" },
+            { id: "space_vibe", name: "Space Vibe", color1: "#7e57c2", color2: "#1a237e", desc: "Космический чилл", pattern: "✨", cat: "Межзвездный покой" }
+        ];
+
+        // Игровая логика
+        let currentQuestions = [];
+        let curIndex = 0;
+        let score = { energy: 0, wild: 0, focus: 0, chill: 0 };
+        let selectedIngredients = [];
+        let userName = "Игрок";
+        
+        let storyUnlockCount = 3; 
+        let unlockedBanks = []; 
+        let activeThemeId = "volt_rush";
+
+        async function initApp() {
+            // Загрузка сохраненного прогресса
+            storyUnlockCount = parseInt(await fetchVKStorage('story_unlock_count', '3'), 10);
+            try {
+                unlockedBanks = JSON.parse(await fetchVKStorage('unlocked_banks', '[]'));
+            } catch(e) { unlockedBanks = []; }
+
+            // Обновляем текст лимитов
+            document.getElementById('story-unlock-counter').innerText = `(Осталось: ${storyUnlockCount}/3)`;
+            if (storyUnlockCount <= 0) {
+                const btn = document.getElementById('btn-story-unlock');
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                btn.innerText = "🔒 Лимит Историй исчерпан (0/3)";
+            }
+
+            renderCan(document.getElementById('canIntro'), CAN_THEMES[0], "Твой энергетический ID", ["Экстракт бодрости", "Таурин", "Кофеин"], {energy:70, wild:45, focus:60});
+        }
+
+        // Запуск
+        initApp();
+
+        // Старт теста
+        document.getElementById('btn-start').addEventListener('click', () => {
+            const val = document.getElementById('username-input').value.trim();
+            userName = val || "Аноним";
+            try { vkBridge.send("VKWebAppTapticImpactOccurred", { force_impact_type: "light" }); } catch(e){}
+            startQuiz();
+        });
+
+        function startQuiz() {
+            // Выбираем 7 случайных неповторяющихся вопросов
+            currentQuestions = [...ALL_QUESTIONS].sort(() => 0.5 - Math.random()).slice(0, 7);
+            curIndex = 0;
+            score = { energy: 0, wild: 0, focus: 0, chill: 0 };
+            selectedIngredients = [];
+
+            showScreen('screen-quiz');
+            showQuestion();
+        }
+
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        function showQuestion() {
+            if (curIndex >= 7) {
+                showLoadingAndResult();
+                return;
+            }
+
+            const qData = currentQuestions[curIndex];
+            document.getElementById('quiz-step-text').innerText = `Вопрос ${curIndex + 1} из 7`;
+            
+            const percent = Math.round((curIndex / 7) * 100);
+            document.getElementById('quiz-percent-text').innerText = `${percent}%`;
+            document.getElementById('quiz-progress').style.width = `${percent}%`;
+            document.getElementById('question-text').innerText = qData.q;
+
+            const holder = document.getElementById('options-holder');
+            holder.innerHTML = '';
+
+            qData.o.forEach((opt, oIdx) => {
+                const card = document.createElement('div');
+                card.className = 'option-card';
+                card.innerHTML = `
+                    <div class="option-icon">${oIdx + 1}</div>
+                    <div class="option-title">${opt.t}</div>
+                `;
+                card.addEventListener('click', () => selectOption(opt));
+                holder.appendChild(card);
+            });
+        }
+
+        function selectOption(opt) {
+            try { vkBridge.send("VKWebAppTapticImpactOccurred", { force_impact_type: "light" }); } catch(e){}
+            
+            // Считаем баллы
+            if (opt.score) {
+                for (let k in opt.score) {
+                    score[k] = (score[k] || 0) + opt.score[k];
+                }
+            }
+            if (opt.ing) {
+                selectedIngredients.push(opt.ing);
+            }
+
+            curIndex++;
+            showQuestion();
+        }
+
+        function showLoadingAndResult() {
+            showScreen('screen-loading');
+            setTimeout(() => {
+                calculateAndShowResult();
+            }, 2200);
+        }
+
+        function calculateAndShowResult() {
+            // Определение наиболее подходящей темы
+            let bestTheme = CAN_THEMES[0];
+            let maxPoints = -999;
+
+            // Алгоритм вычисления
+            CAN_THEMES.forEach(theme => {
+                let currentPoints = 0;
+                if (theme.id === "volt_rush") currentPoints = score.energy * 2 + score.focus;
+                if (theme.id === "berry_blitz") currentPoints = score.wild * 2 + score.energy;
+                if (theme.id === "neon_ghost") currentPoints = score.chill * 2 + score.focus;
+                if (theme.id === "sol_fire") currentPoints = score.wild * 2 + score.energy;
+                if (theme.id === "glitch_wave") currentPoints = score.wild * 3;
+                if (theme.id === "ice_shard") currentPoints = score.chill * 2 + score.focus;
+                if (theme.id === "zen_matcha") currentPoints = score.chill * 2 + score.focus;
+                if (theme.id === "dark_roast") currentPoints = score.focus * 2 + score.energy;
+                if (theme.id === "space_vibe") currentPoints = score.chill * 3;
+
+                // Буст для еще не открытых банок
+                const isLocked = !unlockedBanks.some(b => b.id === theme.id);
+                if (isLocked) {
+                    currentPoints += 3; // Лёгкое подталкивание открыть новую
+                }
+
+                if (currentPoints > maxPoints) {
+                    maxPoints = currentPoints;
+                    bestTheme = theme;
+                }
+            });
+
+            activeThemeId = bestTheme.id;
+
+            // Сохраняем в коллекцию
+            if (!unlockedBanks.some(b => b.id === bestTheme.id)) {
+                unlockedBanks.push({
+                    id: bestTheme.id,
+                    name: bestTheme.name,
+                    user: userName
+                });
+                saveVKStorage('unlocked_banks', JSON.stringify(unlockedBanks));
+                showToast(`🎉 Новая банка "${bestTheme.name}" на полке!`);
+            }
+
+            // Шкалы для визуализации
+            const stats = {
+                energy: Math.min(Math.max(Math.round((score.energy / 18) * 100), 10), 100),
+                wild: Math.min(Math.max(Math.round((score.wild / 18) * 100), 10), 100),
+                focus: Math.min(Math.max(Math.round((score.focus / 18) * 100), 10), 100)
+            };
+
+            // Обновляем текстовые поля
+            document.getElementById('res-category').innerText = `Категория: ${bestTheme.cat}`;
+            document.getElementById('res-title').innerText = `${userName.toUpperCase()} • ${bestTheme.name.toUpperCase()}`;
+
+            // Отрисовка баночки на Canvas
+            const canvas = document.getElementById('renderCanvas');
+            renderCan(canvas, bestTheme, userName, selectedIngredients.slice(0, 3), stats);
+
+            // Отрисовка полки
+            renderShelf();
+
+            showScreen('screen-result');
+            try { vkBridge.send("VKWebAppTapticImpactOccurred", { force_impact_type: "heavy" }); } catch(e){}
+        }
+
+        // Отрисовка Банки 0.5 литра на HTML5 Canvas
+        function renderCan(canvas, theme, name, ingredients, stats) {
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+
+            // Очистка
+            ctx.clearRect(0,0,w,h);
+
+            // Мягкое неоновое свечение на заднем плане
+            let glowGrad = ctx.createRadialGradient(w/2, h/2, 50, w/2, h/2, 200);
+            glowGrad.addColorStop(0, theme.color1 + '22');
+            glowGrad.addColorStop(1, '#00000000');
+            ctx.fillStyle = glowGrad;
+            ctx.fillRect(0, 0, w, h);
+
+            // 1. Рисуем банку (3D Цилиндр)
+            const cx = w/2;
+            const cy = h/2 - 10;
+            const canW = 140;
+            const canH = 250;
+
+            // Тень
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+            ctx.shadowBlur = 20;
+            ctx.shadowOffsetY = 15;
+
+            // Крышка верхняя металлическая
+            ctx.fillStyle = '#b0b5bc';
+            ctx.beginPath();
+            ctx.ellipse(cx, cy - canH/2, canW/2 + 2, 8, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#787e87';
+            ctx.beginPath();
+            ctx.ellipse(cx, cy - canH/2 + 2, canW/2 - 2, 5, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Основное тело банки
+            ctx.shadowColor = 'transparent'; // убираем тень
+            let canGrad = ctx.createLinearGradient(cx - canW/2, 0, cx + canW/2, 0);
+            canGrad.addColorStop(0, '#100e17');
+            canGrad.addColorStop(0.15, theme.color1);
+            canGrad.addColorStop(0.5, theme.color2);
+            canGrad.addColorStop(0.85, theme.color1);
+            canGrad.addColorStop(1, '#100e17');
+
+            ctx.fillStyle = canGrad;
+            ctx.beginPath();
+            ctx.moveTo(cx - canW/2, cy - canH/2);
+            ctx.lineTo(cx + canW/2, cy - canH/2);
+            ctx.quadraticCurveTo(cx + canW/2, cy + canH/2, cx + canW/2 - 4, cy + canH/2);
+            ctx.lineTo(cx - canW/2 + 4, cy + canH/2);
+            ctx.quadraticCurveTo(cx - canW/2, cy + canH/2, cx - canW/2, cy - canH/2);
+            ctx.closePath();
+            ctx.fill();
+
+            // Текстурный паттерн темы
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(cx - canW/2, cy - canH/2, canW, canH);
+            ctx.clip();
+            ctx.globalAlpha = 0.12;
+            ctx.fillStyle = '#fff';
+            ctx.font = '24px sans-serif';
+            for (let i = 0; i < 6; i++) {
+                for (let j = 0; j < 6; j++) {
+                    ctx.fillText(theme.pattern, cx - canW/2 + j*30 + (i%2*10), cy - canH/2 + i*50);
+                }
+            }
+            ctx.restore();
+
+            // Блики и металлический объем
+            let highlight = ctx.createLinearGradient(cx - canW/2, 0, cx + canW/2, 0);
+            highlight.addColorStop(0, 'rgba(255,255,255,0.2)');
+            highlight.addColorStop(0.1, 'rgba(255,255,255,0.0)');
+            highlight.addColorStop(0.45, 'rgba(255,255,255,0.15)');
+            highlight.addColorStop(0.55, 'rgba(0,0,0,0.35)');
+            highlight.addColorStop(0.9, 'rgba(255,255,255,0.0)');
+            highlight.addColorStop(1, 'rgba(0,0,0,0.6)');
+            ctx.fillStyle = highlight;
+            ctx.beginPath();
+            ctx.rect(cx - canW/2, cy - canH/2, canW, canH);
+            ctx.fill();
+
+            // Нижнее металлическое донышко
+            ctx.fillStyle = '#787e87';
+            ctx.beginPath();
+            ctx.ellipse(cx, cy + canH/2, canW/2 - 2, 7, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#4b5056';
+            ctx.beginPath();
+            ctx.ellipse(cx, cy + canH/2 + 2, canW/2 - 6, 4, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 2. Брендинг на Банке
+            ctx.fillStyle = '#000000';
+            ctx.globalAlpha = 0.4;
+            ctx.fillRect(cx - canW/2 + 10, cy - canH/3, canW - 20, 115);
+            ctx.globalAlpha = 1.0;
+
+            // Категория / ГОСТ
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 7px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText("ENERGY LAB • ИГРОВОЙ ФАН-ПРОДУКТ", cx, cy - canH/3 + 12);
+
+            // Текст НАЗВАНИЕ
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '900 13px sans-serif';
+            ctx.fillText(theme.name.toUpperCase(), cx, cy - canH/3 + 30);
+
+            // Имя Игрока
+            ctx.fillStyle = theme.color1;
+            ctx.font = '900 11px sans-serif';
+            ctx.fillText(name.toUpperCase(), cx, cy - canH/3 + 46);
+
+            // Молния / Эмблема
+            ctx.fillStyle = '#ffaa00';
+            ctx.shadowColor = '#ffaa00';
+            ctx.shadowBlur = 10;
+            ctx.font = '24px sans-serif';
+            ctx.fillText("⚡", cx, cy - canH/3 + 74);
+            ctx.shadowBlur = 0; // убираем
+
+            // Объем 0.5L
+            ctx.fillStyle = 'rgba(255,255,255,0.7)';
+            ctx.font = 'bold 8px sans-serif';
+            ctx.fillText("ОБЪЕМ: 0.5 Л", cx, cy - canH/3 + 94);
+
+            // 3. Рисуем состав сбоку (как на настоящей этикетке)
+            ctx.textAlign = 'left';
+            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            ctx.font = '8px sans-serif';
+            ctx.fillText("АКТИВНЫЙ СОСТАВ:", cx - canW/2 - 80, cy - 80);
+
+            ctx.fillStyle = 'rgba(255,255,255,0.85)';
+            ctx.font = 'bold 9px sans-serif';
+            ingredients.forEach((ing, iIdx) => {
+                ctx.fillText(`• ${ing}`, cx - canW/2 - 80, cy - 60 + (iIdx * 16));
+            });
+
+            // Калорийность
+            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            ctx.font = '7px sans-serif';
+            ctx.fillText("ККАЛ / 100МЛ — 0 (ZERO SUGAR)", cx - canW/2 - 80, cy + 10);
+            ctx.fillText("НЕ РЕКОМЕНДУЕТСЯ СПАТЬ", cx - canW/2 - 80, cy + 22);
+
+            // 4. Рисуем три шкалы (Stats)
+            ctx.textAlign = 'left';
+            const statsData = [
+                { label: "ЗАРЯД", val: stats.energy, col: theme.color1 },
+                { label: "АДЕКВАТНОСТЬ", val: stats.wild, col: '#ffaa00' },
+                { label: "ВЫНОСЛИВОСТЬ", val: stats.focus, col: theme.color2 }
+            ];
+
+            statsData.forEach((st, sIdx) => {
+                const sx = cx + canW/2 + 15;
+                const sy = cy - 60 + (sIdx * 35);
+                const barW = 60;
+
+                ctx.fillStyle = 'rgba(255,255,255,0.5)';
+                ctx.font = 'bold 8px sans-serif';
+                ctx.fillText(st.label, sx, sy);
+
+                // Задняя часть шкалы
+                ctx.fillStyle = 'rgba(255,255,255,0.1)';
+                ctx.fillRect(sx, sy + 4, barW, 4);
+
+                // Заполнение
+                ctx.fillStyle = st.col;
+                ctx.fillRect(sx, sy + 4, (st.val / 100) * barW, 4);
+
+                // Процент
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 7px sans-serif';
+                ctx.fillText(`${st.val}%`, sx + barW + 5, sy + 9);
+            });
+        }
+
+        // Отрисовка полки коллекционера 3х3
+        function renderShelf() {
+            const grid = document.getElementById('shelf-grid');
+            grid.innerHTML = '';
+
+            // 9 слотов коллекции
+            CAN_THEMES.forEach(theme => {
+                const unlocked = unlockedBanks.find(b => b.id === theme.id);
+                const slot = document.createElement('div');
+                slot.className = `shelf-slot ${unlocked ? 'unlocked' : 'locked'}`;
+
+                if (unlocked) {
+                    // Создаем мини-canvas превью
+                    const miniCan = document.createElement('canvas');
+                    miniCan.width = 40;
+                    miniCan.height = 65;
+                    miniCan.className = 'slot-image';
+                    renderMiniCan(miniCan, theme);
+                    
+                    slot.appendChild(miniCan);
+                    
+                    const nameLabel = document.createElement('div');
+                    nameLabel.className = 'slot-title';
+                    nameLabel.innerText = theme.name;
+                    slot.appendChild(nameLabel);
+                }
+
+                grid.appendChild(slot);
+            });
+        }
+
+        function renderMiniCan(canvas, theme) {
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+
+            ctx.clearRect(0,0,w,h);
+
+            const cx = w/2;
+            const cy = h/2;
+            const canW = 22;
+            const canH = 46;
+
+            // Свечение сзади
+            ctx.fillStyle = theme.color1 + '33';
+            ctx.beginPath();
+            ctx.arc(cx, cy, 15, 0, Math.PI*2);
+            ctx.fill();
+
+            // Основная часть
+            let grad = ctx.createLinearGradient(cx - canW/2, 0, cx + canW/2, 0);
+            grad.addColorStop(0, '#000');
+            grad.addColorStop(0.3, theme.color1);
+            grad.addColorStop(0.7, theme.color2);
+            grad.addColorStop(1, '#000');
+
+            ctx.fillStyle = grad;
+            ctx.fillRect(cx - canW/2, cy - canH/2, canW, canH);
+
+            // Текст или символ темы
+            ctx.fillStyle = '#fff';
+            ctx.font = '10px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(theme.pattern, cx, cy + 4);
+        }
+
+        // --- МОНЕТИЗАЦИЯ / ПОВТОРНЫЙ ПРОХОД ---
+        document.getElementById('btn-repeat').addEventListener('click', async () => {
+            // Если игрок только начал или у него есть свободные репосты
+            if (storyUnlockCount > 0) {
+                // Показываем модальное окно выбора
+                document.getElementById('modal-unlock').classList.add('active');
+            } else {
+                // Если репосты кончились - сразу реклама
+                runAdsUnlock();
+            }
+        });
+
+        document.getElementById('modal-close').addEventListener('click', () => {
+            document.getElementById('modal-unlock').classList.remove('active');
+        });
+
+        // Опция 1: Репост в Историю (Лимит 3 раза)
+        document.getElementById('btn-story-unlock').addEventListener('click', async () => {
+            if (storyUnlockCount <= 0) return;
+
+            try {
+                const canvas = document.getElementById('renderCanvas');
+                const base64Image = canvas.toDataURL('image/png');
+
+                // Пытаемся опубликовать в историю через VK Bridge
+                await vkBridge.send("VKWebAppShowStoryBox", {
+                    background_type: "image",
+                    background_attachment: base64Image,
+                    attachment: {
+                        text: "Узнай, какой ты энергетик! ⚡",
+                        type: "url",
+                        url: VK_APP_URL
+                    }
+                });
+
+                // Уменьшаем счетчик лимитов
+                storyUnlockCount--;
+                await saveVKStorage('story_unlock_count', storyUnlockCount);
+                document.getElementById('story-unlock-counter').innerText = `(Осталось: ${storyUnlockCount}/3)`;
+
+                if (storyUnlockCount <= 0) {
+                    const btn = document.getElementById('btn-story-unlock');
+                    btn.disabled = true;
+                    btn.style.opacity = '0.5';
+                    btn.innerText = "🔒 Лимит Историй исчерпан (0/3)";
+                }
+
+                document.getElementById('modal-unlock').classList.remove('active');
+                showToast("🔓 Доступ открыт! Поехали!");
+                startQuiz();
+
+            } catch (e) {
+                console.log("Репост отклонен или произошла ошибка", e);
+                showToast("Пожалуйста, опубликуйте историю для продолжения!");
+            }
+        });
+
+        // Опция 2: Просмотр короткой рекламы (Безлимитно)
+        document.getElementById('btn-ads-unlock').addEventListener('click', () => {
+            runAdsUnlock();
+        });
+
+        function runAdsUnlock() {
+            try {
+                // Вызов реальной нативной рекламы ВК за вознаграждение
+                vkBridge.send("VKWebAppShowNativeAds", { ad_format: "reward" })
+                .then(data => {
+                    if (data.result) {
+                        document.getElementById('modal-unlock').classList.remove('active');
+                        showToast("🔓 Реклама просмотрена! Поехали!");
+                        startQuiz();
+                    } else {
+                        showToast("Просмотр рекламы не завершен!");
+                    }
+                })
+                .catch(err => {
+                    console.log("Ошибка рекламы, симулируем просмотр", err);
+                    // На случай если реклама не подключена или не загрузилась у пользователя
+                    showToast("⏳ Загрузка...");
+                    setTimeout(() => {
+                        document.getElementById('modal-unlock').classList.remove('active');
+                        showToast("🔓 Доступ открыт!");
+                        startQuiz();
+                    }, 2000);
+                });
+            } catch (e) {
+                // Sandbox fallback
+                showToast("🔓 Доступ открыт (Превью-режим)");
+                document.getElementById('modal-unlock').classList.remove('active');
+                startQuiz();
+            }
+        }
+
+        // Кнопка: Поделиться в Историю на главном экране (Просто виральность)
+        document.getElementById('btn-share-story').addEventListener('click', async () => {
+            try {
+                const canvas = document.getElementById('renderCanvas');
+                const base64Image = canvas.toDataURL('image/png');
+
+                await vkBridge.send("VKWebAppShowStoryBox", {
+                    background_type: "image",
+                    background_attachment: base64Image,
+                    attachment: {
+                        text: "Какой ты энергетик? Собери свою банку! ⚡",
+                        type: "url",
+                        url: VK_APP_URL
+                    }
+                });
+                showToast("Успешно опубликовано!");
+            } catch (e) {
+                showToast("Ошибка публикации!");
+            }
+        });
+
+        // Toast уведомления
+        function showToast(text) {
+            const t = document.getElementById('toast');
+            t.innerText = text;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+    </script>
+</body>
+</html>
